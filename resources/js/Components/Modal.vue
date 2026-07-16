@@ -1,18 +1,20 @@
-<script setup lang="ts">
+<script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 
-const props = withDefaults(
-    defineProps<{
-        show?: boolean;
-        maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
-        closeable?: boolean;
-    }>(),
-    {
-        show: false,
-        maxWidth: '2xl',
-        closeable: true,
+const props = defineProps({
+    show: {
+        type: Boolean,
+        default: false,
     },
-);
+    maxWidth: {
+        type: String,
+        default: '2xl',
+    },
+    closeable: {
+        type: Boolean,
+        default: true,
+    },
+});
 
 const emit = defineEmits(['close']);
 const dialog = ref();
@@ -43,7 +45,7 @@ const close = () => {
     }
 };
 
-const closeOnEscape = (e: KeyboardEvent) => {
+const closeOnEscape = (e) => {
     if (e.key === 'Escape') {
         e.preventDefault();
 
@@ -68,6 +70,7 @@ const maxWidthClass = computed(() => {
         lg: 'sm:max-w-lg',
         xl: 'sm:max-w-xl',
         '2xl': 'sm:max-w-2xl',
+        '7xl': 'sm:max-w-7xl',
     }[props.maxWidth];
 });
 </script>
@@ -78,7 +81,7 @@ const maxWidthClass = computed(() => {
         ref="dialog"
     >
         <div
-            class="fixed inset-0 z-50 overflow-y-auto px-4 py-6 sm:px-0"
+            class="fixed inset-0 z-50 flex min-h-full items-center justify-center px-4 py-6 sm:px-0"
             scroll-region
         >
             <Transition
