@@ -253,6 +253,20 @@ const submit = () => {
                     <div
                         class="flex w-full flex-col items-center gap-2 sm:w-72 flex-shrink-0"
                     >
+                        <p
+                            v-if="selectedTemplate"
+                            class="font-medium text-[#14202B]"
+                        >
+                            {{ selectedTemplate.name }}
+                        </p>
+                        <p
+                            v-if="selectedTemplate"
+                            class="text-sm text-[#14202B]/50"
+                        >
+                            {{ selectedTemplate.sport }} · Base price ₱{{
+                                selectedTemplate.price
+                            }}
+                        </p>
                         <div
                             class="flex h-48 w-full items-center justify-center overflow-hidden rounded-lg border border-[#14202B]/10 bg-[#14202B]/5 sm:h-full"
                         >
@@ -263,20 +277,6 @@ const submit = () => {
                                 class="h-full w-full object-contain p-4"
                             />
                         </div>
-                        <p
-                            v-if="selectedTemplate"
-                            class="text-sm font-medium text-[#14202B]"
-                        >
-                            {{ selectedTemplate.name }}
-                        </p>
-                        <p
-                            v-if="selectedTemplate"
-                            class="text-xs text-[#14202B]/50"
-                        >
-                            {{ selectedTemplate.sport }} · Base price ₱{{
-                                selectedTemplate.price
-                            }}
-                        </p>
                     </div>
 
                     <!-- Design request fields -->
