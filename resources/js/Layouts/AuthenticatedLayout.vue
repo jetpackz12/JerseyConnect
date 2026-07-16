@@ -11,7 +11,7 @@ const sidebarMenus = [
     { menuName: "Home", route: route("client.home"), icon: "fa-solid fa-home" },
     {
         menuName: "My Design Requests",
-        route: route("client.orders.index"),
+        route: route("client.design.index"),
         icon: "fa-solid fa-tshirt",
     },
     {

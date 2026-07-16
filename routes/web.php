@@ -19,6 +19,12 @@ Route::middleware(['auth', 'client'])->prefix('client')->name('client.')->group(
         return Inertia::render('Client/Home');
     })->name('home');
 
+    Route::prefix('design')->name('design.')->group(function () {
+        Route::get('/', function () {
+            return Inertia::render('Client/Design');
+        })->name('index');
+    });
+
     Route::prefix('orders')->name('orders.')->group(function () {
         Route::get('/', function () {
             return Inertia::render('Client/Orders');
