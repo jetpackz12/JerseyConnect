@@ -6,7 +6,7 @@ import SecondaryButton from "@/Components/SecondaryButton.vue";
 import DangerButton from "@/Components/DangerButton.vue";
 import type { DesignRequest, DesignRequestStatus } from "@/types/jersey";
 import { useModal } from "@/Composables/useModal";
-import { Head, Link } from "@inertiajs/vue3";
+import { Head, Link, useForm } from "@inertiajs/vue3";
 import { ref, computed } from "vue";
 
 const props = defineProps<{
@@ -94,6 +94,38 @@ const mockDesignRequests: DesignRequest[] = [
         notes: null,
         created_at: "2026-07-10T08:30:00Z",
     },
+    {
+        id: 6,
+        template_id: 1,
+        template_name: "Camo Edge",
+        template_image: "/images/image1.png",
+        template_price: 249,
+        team_name: "Mandurriao Marines",
+        primary_color: "#34495E",
+        secondary_color: "#7F8C8D",
+        accent_color: "#F5C518",
+        estimated_quantity: 40,
+        status: "waiting_for_approval",
+        font_style: "Military Stencil",
+        notes: null,
+        created_at: "2026-07-10T08:30:00Z",
+    },
+    {
+        id: 7,
+        template_id: 1,
+        template_name: "Minimalist Crest",
+        template_image: "/images/image4.png",
+        template_price: 249,
+        team_name: "Arevalo Titans",
+        primary_color: "#1F618D",
+        secondary_color: "#FFFFFF",
+        accent_color: "#1F618D",
+        estimated_quantity: 12,
+        status: "waiting_for_down_payment",
+        font_style: "Sans Condensed",
+        notes: null,
+        created_at: "2026-06-20T11:22:00Z",
+    },
 ];
 
 const requests = props.requests ?? mockDesignRequests;
@@ -103,6 +135,8 @@ const statusFilters: { label: string; value: DesignRequestStatus | "All" }[] = [
     { label: "Pending Review", value: "pending_review" },
     { label: "In Discussion", value: "in_discussion" },
     { label: "Revision Requested", value: "revision_requested" },
+    { label: "Waiting for Down Payment", value: "waiting_for_down_payment" },
+    { label: "Waiting for Approval", value: "waiting_for_approval" },
     { label: "Approved", value: "approved" },
 ];
 
@@ -123,6 +157,14 @@ const statusBadge: Record<
     revision_requested: {
         label: "Revision Requested",
         class: "bg-orange-100 text-orange-700",
+    },
+    waiting_for_down_payment: {
+        label: "Waiting for Down Payment",
+        class: "bg-pink-100 text-pink-700",
+    },
+    waiting_for_approval: {
+        label: "Waiting for Approval",
+        class: "bg-indigo-100 text-indigo-700",
     },
     approved: { label: "Approved", class: "bg-green-100 text-green-700" },
 };
@@ -172,6 +214,51 @@ function formatDate(value: string) {
         year: "numeric",
         month: "short",
         day: "numeric",
+    });
+}
+
+// --- Payment modal state ---
+const paymentPreview = ref<string | null>(null);
+
+const paymentForm = useForm({
+    request_id: null as number | null,
+    gcash_number: "",
+    reference_number: "",
+    proof_image: null as File | null,
+});
+
+function payRequest(request: DesignRequest) {
+    selectedRequest.value = request;
+    paymentForm.reset();
+    paymentForm.request_id = request.id;
+    paymentPreview.value = null;
+
+    modal.title.value = "GCash Payment";
+    modal.type.value = "Payment";
+    modal.icon.value = "fa-solid fa-credit-card";
+    modal.openModal();
+}
+
+function handleProofUpload(e: Event) {
+    const target = e.target as HTMLInputElement;
+    const file = target.files?.[0];
+    if (!file) return;
+
+    paymentForm.proof_image = file;
+    paymentPreview.value = URL.createObjectURL(file);
+}
+
+function removeProofImage() {
+    paymentForm.proof_image = null;
+    paymentPreview.value = null;
+}
+
+function submitPayment() {
+    if (!selectedRequest.value) return;
+
+    paymentForm.post(route("client.requests.pay", selectedRequest.value.id), {
+        forceFormData: true,
+        onSuccess: () => closeModal(),
     });
 }
 </script>
@@ -285,9 +372,20 @@ function formatDate(value: string) {
                             Message
                         </Link>
                         <button
+                            v-if="row.status === 'waiting_for_down_payment'"
+                            type="button"
+                            class="text-xs font-medium bg-green-600 text-white rounded-md px-2 py-2 transition-colors hover:bg-green-500"
+                            @click="payRequest(row)"
+                        >
+                            <font-awesome-icon icon="fa-solid fa-credit-card" />
+                            Pay
+                        </button>
+                        <button
                             v-if="
                                 row.status !== 'approved' &&
-                                row.status !== 'revision_requested'
+                                row.status !== 'revision_requested' &&
+                                row.status !== 'waiting_for_down_payment' &&
+                                row.status !== 'waiting_for_approval'
                             "
                             type="button"
                             class="text-xs font-medium bg-red-600 text-white rounded-md px-2 py-2 transition-colors hover:bg-red-500"
@@ -403,6 +501,184 @@ function formatDate(value: string) {
                         <font-awesome-icon icon="fa-solid fa-thumbs-up" />
                     </DangerButton>
                 </div>
+            </div>
+        </Modal>
+        <!-- Payment Modal -->
+        <Modal
+            :show="modal.type.value === 'Payment'"
+            @close="closeModal"
+            :maxWidth="'md'"
+        >
+            <div
+                class="overflow-y-auto max-h-[90vh] px-4 pt-5 pb-4 sm:p-6"
+                v-if="selectedRequest"
+            >
+                <div class="flex items-center justify-between gap-2">
+                    <h2 class="text-base sm:text-lg font-medium text-gray-900">
+                        <font-awesome-icon :icon="modal.icon.value" />
+                        {{ modal.title.value }}
+                    </h2>
+                </div>
+                <hr class="my-3" />
+
+                <!-- Order summary -->
+                <div class="rounded-lg bg-[#14202B]/5 p-3 text-sm mb-4">
+                    <div class="flex justify-between">
+                        <span class="text-[#14202B]/70">Design</span>
+                        <span class="font-medium text-[#14202B]">{{
+                            selectedRequest.template_name
+                        }}</span>
+                    </div>
+                    <div class="flex justify-between mt-1">
+                        <span class="text-[#14202B]/70">Amount Due</span>
+                        <span class="font-bold text-[#2E7D4F]">
+                            ₱
+                            {{
+                                (
+                                    selectedRequest.estimated_quantity *
+                                    selectedRequest.template_price
+                                ).toFixed(2)
+                            }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- GCash instructions -->
+                <div
+                    class="rounded-lg border border-[#2E7D4F]/20 bg-[#2E7D4F]/5 p-3 mb-4 text-sm"
+                >
+                    <p class="font-semibold text-[#14202B] mb-1">
+                        <font-awesome-icon icon="fa-solid fa-circle-info" />
+                        Send payment via GCash to:
+                    </p>
+                    <p class="text-[#14202B]">0917 123 4567 (Juan D.)</p>
+                    <p class="text-[#14202B]/60 text-xs mt-1">
+                        After sending, fill out the details below and upload
+                        your receipt screenshot.
+                    </p>
+                </div>
+
+                <form
+                    @submit.prevent="submitPayment"
+                    class="flex flex-col gap-4"
+                >
+                    <!-- GCash number -->
+                    <div>
+                        <label
+                            class="block text-sm font-medium text-[#14202B] mb-1"
+                        >
+                            Your GCash Number
+                        </label>
+                        <input
+                            v-model="paymentForm.gcash_number"
+                            type="text"
+                            inputmode="numeric"
+                            placeholder="09XX XXX XXXX"
+                            class="w-full rounded-md border border-[#14202B]/15 px-3 py-2 text-sm focus:border-[#2E7D4F] focus:ring-[#2E7D4F]"
+                            required
+                        />
+                        <p
+                            v-if="paymentForm.errors.gcash_number"
+                            class="text-xs text-red-600 mt-1"
+                        >
+                            {{ paymentForm.errors.gcash_number }}
+                        </p>
+                    </div>
+
+                    <!-- Reference number -->
+                    <div>
+                        <label
+                            class="block text-sm font-medium text-[#14202B] mb-1"
+                        >
+                            Transaction Reference Number
+                        </label>
+                        <input
+                            v-model="paymentForm.reference_number"
+                            type="text"
+                            placeholder="e.g. 1234567890123"
+                            class="w-full rounded-md border border-[#14202B]/15 px-3 py-2 text-sm focus:border-[#2E7D4F] focus:ring-[#2E7D4F]"
+                            required
+                        />
+                        <p
+                            v-if="paymentForm.errors.reference_number"
+                            class="text-xs text-red-600 mt-1"
+                        >
+                            {{ paymentForm.errors.reference_number }}
+                        </p>
+                    </div>
+
+                    <!-- Proof upload -->
+                    <div>
+                        <label
+                            class="block text-sm font-medium text-[#14202B] mb-1"
+                        >
+                            Upload Transaction Screenshot
+                        </label>
+
+                        <div v-if="!paymentPreview">
+                            <label
+                                class="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-[#14202B]/20 py-6 cursor-pointer hover:border-[#2E7D4F] transition-colors"
+                            >
+                                <font-awesome-icon
+                                    icon="fa-solid fa-cloud-arrow-up"
+                                    class="text-2xl text-[#14202B]/40"
+                                />
+                                <span class="text-xs text-[#14202B]/60"
+                                    >Click to upload (JPG, PNG)</span
+                                >
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    class="hidden"
+                                    @change="handleProofUpload"
+                                />
+                            </label>
+                        </div>
+
+                        <div v-else class="relative w-full">
+                            <img
+                                :src="paymentPreview"
+                                alt="Payment proof preview"
+                                class="w-full max-h-64 object-contain rounded-lg border border-[#14202B]/10 bg-[#14202B]/5"
+                            />
+                            <button
+                                type="button"
+                                @click="removeProofImage"
+                                class="absolute top-2 right-2 bg-red-600 text-white rounded-full h-7 w-7 flex items-center justify-center hover:bg-red-500"
+                            >
+                                <font-awesome-icon icon="fa-solid fa-xmark" />
+                            </button>
+                        </div>
+                        <p
+                            v-if="paymentForm.errors.proof_image"
+                            class="text-xs text-red-600 mt-1"
+                        >
+                            {{ paymentForm.errors.proof_image }}
+                        </p>
+                    </div>
+
+                    <div class="mt-2 flex justify-between">
+                        <SecondaryButton type="button" @click="closeModal">
+                            Cancel
+                        </SecondaryButton>
+
+                        <button
+                            type="submit"
+                            :disabled="
+                                paymentForm.processing ||
+                                !paymentForm.proof_image
+                            "
+                            class="rounded-md bg-[#2E7D4F] px-4 py-2 text-sm font-medium text-white hover:bg-[#2E7D4F]/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        >
+                            <font-awesome-icon icon="fa-solid fa-paper-plane" />
+                            {{
+                                paymentForm.processing
+                                    ? "Submitting..."
+                                    : "Submit Payment"
+                            }}
+                        </button>
+                    </div>
+                </form>
             </div>
         </Modal>
     </AuthenticatedLayout>
