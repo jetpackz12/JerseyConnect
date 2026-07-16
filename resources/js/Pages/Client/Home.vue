@@ -242,7 +242,7 @@ const submit = () => {
             @close="!form.processing && modalClose()"
             :maxWidth="'7xl'"
         >
-            <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+            <div class="max-h-[85vh] overflow-y-auto px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                 <h2 class="text-lg font-medium text-gray-900">
                     <font-awesome-icon :icon="modal.icon.value" />
                     {{ modal.title.value }}
@@ -254,7 +254,7 @@ const submit = () => {
                         class="flex w-full flex-col items-center gap-2 sm:w-72 flex-shrink-0"
                     >
                         <div
-                            class="flex h-full w-full items-center justify-center overflow-hidden rounded-lg border border-[#14202B]/10 bg-[#14202B]/5"
+                            class="flex h-48 w-full items-center justify-center overflow-hidden rounded-lg border border-[#14202B]/10 bg-[#14202B]/5 sm:h-full"
                         >
                             <img
                                 v-if="selectedTemplate"
@@ -297,7 +297,7 @@ const submit = () => {
                             />
                         </div>
 
-                        <div class="mt-4 grid grid-cols-3 gap-3">
+                        <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
                             <div>
                                 <InputLabel
                                     for="primary_color"
@@ -407,9 +407,11 @@ const submit = () => {
                     </div>
                 </div>
                 <hr class="mt-5" />
-                <div class="mt-6 flex justify-between">
+                <div
+                    class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between"
+                >
                     <SecondaryButton
-                        class="flex items-center"
+                        class="flex w-full items-center justify-center sm:w-auto"
                         :class="{ 'opacity-25': form.processing }"
                         @click="modalClose"
                         :disabled="form.processing"
@@ -418,7 +420,7 @@ const submit = () => {
                     </SecondaryButton>
 
                     <PrimaryButton
-                        class="flex items-center gap-1"
+                        class="flex w-full items-center justify-center gap-1 sm:w-auto"
                         :class="{ 'opacity-25': form.processing }"
                         @click="submit"
                         :disabled="form.processing"
