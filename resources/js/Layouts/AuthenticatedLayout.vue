@@ -10,12 +10,17 @@ const page = usePage();
 const sidebarMenus = [
     { menuName: "Home", route: route("client.home"), icon: "fa-solid fa-home" },
     {
-        menuName: "Orders",
+        menuName: "My Design Requests",
+        route: route("client.orders.index"),
+        icon: "fa-solid fa-tshirt",
+    },
+    {
+        menuName: "My Orders",
         route: route("client.orders.index"),
         icon: "fa-solid fa-shopping-basket",
     },
     {
-        menuName: "Chat",
+        menuName: "Messages",
         route: route("client.chat.index"),
         icon: "fa-solid fa-message",
         hasBadge: true,
@@ -145,7 +150,7 @@ const isActive = (href: string | URL) =>
                 </div>
             </header>
 
-            <main class="flex-1 overflow-y-auto p-6 relative">
+            <main class="flex-1 overflow-y-auto p-6 relative bg-gray-100">
                 <div class="relative z-10">
                     <slot />
                 </div>
