@@ -8,8 +8,6 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 
 const user = usePage().props.auth.user;
 
-console.log(user);
-
 const user_information = useForm({
     first_name: user.user_info?.first_name,
     middle_name: user.user_info?.middle_name ?? "",
