@@ -19,42 +19,46 @@ const sidebarMenus = [
         menuName: "Jersey Management",
         icon: "fa-solid fa-tshirt",
         children: [
-            { menuName: "Jersey", route: route("admin.dashboard") },
+            { menuName: "Jersey Templates", route: route("admin.dashboard") },
             {
-                menuName: "Daily Sales Report",
-                route: route("admin.dashboard"),
-            },
-            {
-                menuName: "Event Types",
-                route: route("admin.dashboard"),
-            },
-            {
-                menuName: "Venue Packages",
-                route: route("admin.dashboard"),
-            },
-            {
-                menuName: "Package Add Ons",
-                route: route("admin.dashboard"),
-            },
-            {
-                menuName: "GCash & Maya",
+                menuName: "Jersey Types",
                 route: route("admin.dashboard"),
             },
         ],
+    },
+    {
+        menuName: "Design Requests",
+        route: route("admin.dashboard"),
+        icon: "fa-solid fa-spray-can-sparkles",
+        hasBadge: true,
     },
     {
         menuName: "Order Management",
         icon: "fa-solid fa-shopping-basket",
         children: [
-            { menuName: "Jersey", route: route("admin.dashboard") },
+            { menuName: "Orders", route: route("admin.dashboard") },
             {
                 menuName: "Daily Sales Report",
                 route: route("admin.dashboard"),
-            }
+            },
+            {
+                menuName: "Couriers",
+                route: route("admin.dashboard"),
+            },
+            {
+                menuName: "Shipping Zones",
+                route: route("admin.dashboard"),
+            },
         ],
     },
     {
-        menuName: "Chats",
+        menuName: "Gcash Details",
+        route: route("admin.dashboard"),
+        icon: "fa-solid fa-wallet",
+        hasBadge: true,
+    },
+    {
+        menuName: "Messages",
         route: route("admin.dashboard"),
         icon: "fa-solid fa-envelope",
         hasBadge: true,
