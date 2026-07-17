@@ -16,15 +16,10 @@ const sidebarMenus = [
         icon: "fa-solid fa-home",
     },
     {
-        menuName: "Jersey Management",
+        menuName: "Jersey Templates",
+        route: route("admin.dashboard"),
         icon: "fa-solid fa-tshirt",
-        children: [
-            { menuName: "Jersey Templates", route: route("admin.dashboard") },
-            {
-                menuName: "Jersey Types",
-                route: route("admin.dashboard"),
-            },
-        ],
+        hasBadge: true,
     },
     {
         menuName: "Design Requests",
@@ -266,32 +261,6 @@ const toggleSubmenu = (menuName) => {
             </header>
 
             <main class="flex-1 overflow-y-auto p-6 relative">
-                <!-- Background watermark logo -->
-                <div
-                    class="pointer-events-none fixed inset-0 flex items-center justify-center z-0 overflow-hidden"
-                >
-                    <svg
-                        class="w-[100px] h-[100px] sm:w-[480px] sm:h-[480px] fill-slate-900 opacity-[0.12] flex-shrink-0"
-                        viewBox="0 0 48 48"
-                    >
-                        <path
-                            d="M24 6a6 6 0 1 0 0 12A6 6 0 0 0 24 6zm0 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm0 6c-1.1 0-2 .9-2 2v16.5C15 37 8.5 31 8.5 24H12c.83 0 1.5-.67 1.5-1.5S12.83 21 12 21H6c-.83 0-1.5.67-1.5 1.5S5.17 24 6 24c0 8.84 7.16 16 16 16s16-7.16 16-16h2.5a1.5 1.5 0 0 0 0-3H36c-.83 0-1.5.67-1.5 1.5S35.17 24 36 24c0 7-6.5 13-13.5 13.5V22c0-1.1-.9-2-2-2z"
-                        />
-                    </svg>
-                    <div>
-                        <div
-                            class="font-display text-slate-900 text-md font-semibold leading-tight"
-                        >
-                            Butal Ship Hauz
-                        </div>
-                        <div
-                            class="font-mono text-brass text-md tracking-[.18em] uppercase leading-none"
-                        >
-                            Talibon, Bohol
-                        </div>
-                    </div>
-                </div>
-
                 <div class="relative z-10">
                     <slot />
                 </div>
