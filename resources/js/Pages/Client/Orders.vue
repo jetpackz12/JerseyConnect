@@ -443,18 +443,12 @@ function formatDate(value: string) {
                 </template>
 
                 <template #tracking="{ row }">
-                    <a
+                    <span
                         v-if="row.courier_receipt"
-                        :href="row.courier_receipt.tracking_url"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:underline"
+                        class="inline-flex items-center gap-1 font-medium text-blue-600"
                     >
-                        <font-awesome-icon
-                            icon="fa-solid fa-arrow-up-right-from-square"
-                        />
                         {{ row.courier_receipt.transaction_number }}
-                    </a>
+                    </span>
                     <span v-else class="text-xs text-[#14202B]/40">—</span>
                 </template>
 
@@ -480,17 +474,17 @@ function formatDate(value: string) {
                                 row.status !== 'cancelled'
                             "
                             type="button"
-                            class="text-xs font-medium bg-[#14202B] text-white rounded-md px-2 py-2 transition-colors hover:bg-[#14202B]/80"
+                            class="text-xs font-medium bg-gray-600 text-white rounded-md px-2 py-2 transition-colors hover:bg-gray-500"
                             @click="openStatusModal(row)"
                         >
-                            <font-awesome-icon icon="fa-solid fa-truck" />
+                            <font-awesome-icon icon="fa-solid fa-edit" />
                             Update
                         </button>
 
                         <button
-                            v-if="props.readOnly && row.status === 'processing'"
+                            v-if="!props.readOnly && row.status === 'processing'"
                             type="button"
-                            class="text-xs font-medium bg-orange-600 text-white rounded-md px-2 py-2 transition-colors hover:bg-orange-500"
+                            class="text-xs font-medium bg-green-600 text-white rounded-md px-2 py-2 transition-colors hover:bg-green-500"
                             @click="openAddressModal(row)"
                         >
                             <font-awesome-icon
@@ -500,12 +494,23 @@ function formatDate(value: string) {
                         </button>
 
                         <Link
-                            class="text-xs font-medium bg-gray-500 text-white rounded-md px-2 py-2 transition-colors hover:bg-gray-400"
+                            class="text-xs font-medium bg-orange-600 text-white rounded-md px-2 py-2 transition-colors hover:bg-orange-500"
                             :href="route('client.chat.index')"
                         >
                             <font-awesome-icon icon="fa-solid fa-message" />
                             Message
                         </Link>
+
+                        <a
+                            class="text-xs font-medium bg-ink text-white rounded-md px-2 py-2 transition-colors hover:bg-ink/90"
+                            v-if="row.courier_receipt"
+                            :href="row.courier_receipt.tracking_url"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <font-awesome-icon icon="fa-solid fa-truck" />
+                            Track
+                        </a>
                     </div>
                 </template>
             </Table>
@@ -839,7 +844,7 @@ function formatDate(value: string) {
         <Modal
             :show="modal.type.value === 'Address'"
             @close="closeModal"
-            :maxWidth="'md'"
+            :maxWidth="'lg'"
         >
             <div class="px-4 pt-5 pb-4 sm:p-6" v-if="selectedOrder">
                 <h2 class="text-lg font-medium text-gray-900">
