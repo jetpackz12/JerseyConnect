@@ -17,13 +17,13 @@ const sidebarMenus = [
     },
     {
         menuName: "Jersey Templates",
-        route: route("admin.dashboard"),
+        route: route("admin.jersey"),
         icon: "fa-solid fa-tshirt",
         hasBadge: true,
     },
     {
         menuName: "Design Requests",
-        route: route("admin.dashboard"),
+        route: route("admin.design"),
         icon: "fa-solid fa-spray-can-sparkles",
         hasBadge: true,
     },
@@ -31,36 +31,36 @@ const sidebarMenus = [
         menuName: "Order Management",
         icon: "fa-solid fa-shopping-basket",
         children: [
-            { menuName: "Orders", route: route("admin.dashboard") },
+            { menuName: "Orders", route: route("admin.orders") },
             {
                 menuName: "Daily Sales Report",
-                route: route("admin.dashboard"),
+                route: route("admin.sales"),
             },
             {
                 menuName: "Couriers",
-                route: route("admin.dashboard"),
+                route: route("admin.couriers"),
             },
             {
                 menuName: "Shipping Zones",
-                route: route("admin.dashboard"),
+                route: route("admin.shipping"),
             },
         ],
     },
     {
         menuName: "Gcash Details",
-        route: route("admin.dashboard"),
+        route: route("admin.gcash"),
         icon: "fa-solid fa-wallet",
         hasBadge: true,
     },
     {
         menuName: "Messages",
-        route: route("admin.dashboard"),
+        route: route("admin.messages"),
         icon: "fa-solid fa-envelope",
         hasBadge: true,
     },
     {
         menuName: "Users",
-        route: route("admin.dashboard"),
+        route: route("admin.users"),
         icon: "fa-solid fa-users",
     },
 ];
