@@ -126,6 +126,22 @@ const mockDesignRequests: DesignRequest[] = [
         notes: null,
         created_at: "2026-06-20T11:22:00Z",
     },
+    {
+        id: 7,
+        template_id: 1,
+        template_name: "Minimalist Crest",
+        template_image: "/images/image4.png",
+        template_price: 249,
+        team_name: "Arevalo Titans",
+        primary_color: "#1F618D",
+        secondary_color: "#FFFFFF",
+        accent_color: "#1F618D",
+        estimated_quantity: 12,
+        status: "pending_down_payment_review",
+        font_style: "Sans Condensed",
+        notes: null,
+        created_at: "2026-06-20T11:22:00Z",
+    },
 ];
 
 const requests = props.requests ?? mockDesignRequests;
@@ -137,6 +153,7 @@ const statusFilters: { label: string; value: DesignRequestStatus | "All" }[] = [
     { label: "Revision Requested", value: "revision_requested" },
     { label: "Waiting for Down Payment", value: "waiting_for_down_payment" },
     { label: "Waiting for Approval", value: "waiting_for_approval" },
+    { label: "Pending Down Payment Review", value: "pending_down_payment_review" },
     { label: "Approved", value: "approved" },
 ];
 
@@ -165,6 +182,10 @@ const statusBadge: Record<
     waiting_for_approval: {
         label: "Waiting for Approval",
         class: "bg-indigo-100 text-indigo-700",
+    },
+    pending_down_payment_review: {
+        label: "Pending Down Payment Review",
+        class: "bg-red-100 text-red-700",  
     },
     approved: { label: "Approved", class: "bg-green-100 text-green-700" },
 };
@@ -385,7 +406,8 @@ function submitPayment() {
                                 row.status !== 'approved' &&
                                 row.status !== 'revision_requested' &&
                                 row.status !== 'waiting_for_down_payment' &&
-                                row.status !== 'waiting_for_approval'
+                                row.status !== 'waiting_for_approval' &&
+                                row.status !== 'pending_down_payment_review'
                             "
                             type="button"
                             class="text-xs font-medium bg-red-600 text-white rounded-md px-2 py-2 transition-colors hover:bg-red-500"

@@ -17,6 +17,7 @@ export type DesignRequestStatus =
     | "revision_requested"
     | "waiting_for_down_payment"
     | "waiting_for_approval"
+    | "pending_down_payment_review"
     | "approved";
 
 export interface DesignRequest {
