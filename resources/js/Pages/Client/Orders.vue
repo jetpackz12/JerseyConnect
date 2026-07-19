@@ -4,7 +4,7 @@ import Table from "@/Components/Table.vue";
 import Modal from "@/Components/Modal.vue";
 import SecondaryButton from "@/Components/SecondaryButton.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
-import DangerButton from "@/Components/DangerButton.vue";
+import LocationPicker from "@/Components/LocationPicker.vue";
 import type {
     Order,
     OrderStatus,
@@ -125,7 +125,7 @@ const mockOrders: Order[] = [
             is_default: true,
         },
         shipping_fee: computeShippingFee("luzon", 15),
-        status: "delivered",
+        status: "processing",
         courier_receipt: {
             id: 2,
             courier_name: "LBC Express",
@@ -303,7 +303,14 @@ const addressForm = reactive({
     province: "",
     postal_code: "",
     zone: "metro_iloilo" as ShippingZone,
+    latitude: null as number | null,
+    longitude: null as number | null,
 });
+
+function handleLocationUpdate(lat: number, lng: number) {
+    addressForm.latitude = lat;
+    addressForm.longitude = lng;
+}
 
 function openAddressModal(order: Order) {
     selectedOrder.value = order;
@@ -311,6 +318,8 @@ function openAddressModal(order: Order) {
         ...order.address,
         line2: order.address.line2 ?? "",
         barangay: order.address.barangay ?? "",
+        latitude: order.address.latitude ?? null,
+        longitude: order.address.longitude ?? null,
     });
     modal.title.value = "Delivery Address";
     modal.type.value = "Address";
@@ -333,6 +342,8 @@ function submitAddressUpdate() {
         ...addressForm,
         line2: addressForm.line2 || null,
         barangay: addressForm.barangay || null,
+        latitude: addressForm.latitude,
+        longitude: addressForm.longitude,
     };
     selectedOrder.value.shipping_fee = previewShippingFee.value;
     closeModal();
@@ -408,7 +419,7 @@ function formatDate(value: string) {
                 <template #zone="{ row }">
                     <div class="flex flex-col items-center text-xs">
                         <span class="font-medium text-[#14202B]">{{
-                            SHIPPING_ZONES[row.address.zone].label
+                            row.address.province
                         }}</span>
                         <span class="text-[#14202B]/50">{{
                             row.address.city
@@ -482,7 +493,9 @@ function formatDate(value: string) {
                         </button>
 
                         <button
-                            v-if="!props.readOnly && row.status === 'processing'"
+                            v-if="
+                                !props.readOnly && row.status === 'processing'
+                            "
                             type="button"
                             class="text-xs font-medium bg-green-600 text-white rounded-md px-2 py-2 transition-colors hover:bg-green-500"
                             @click="openAddressModal(row)"
@@ -898,7 +911,7 @@ function formatDate(value: string) {
                             class="w-full rounded-md border border-gray-300 text-sm py-2 px-3"
                         />
                     </div>
-                    <div>
+                    <div class="sm:col-span-2">
                         <label
                             class="block text-sm font-medium text-[#14202B] mb-1"
                             >Barangay (optional)</label
@@ -909,7 +922,7 @@ function formatDate(value: string) {
                             class="w-full rounded-md border border-gray-300 text-sm py-2 px-3"
                         />
                     </div>
-                    <div>
+                    <div class="sm:col-span-2">
                         <label
                             class="block text-sm font-medium text-[#14202B] mb-1"
                             >City / Municipality</label
@@ -920,7 +933,7 @@ function formatDate(value: string) {
                             class="w-full rounded-md border border-gray-300 text-sm py-2 px-3"
                         />
                     </div>
-                    <div>
+                    <div class="sm:col-span-2">
                         <label
                             class="block text-sm font-medium text-[#14202B] mb-1"
                             >Province</label
@@ -931,23 +944,23 @@ function formatDate(value: string) {
                             class="w-full rounded-md border border-gray-300 text-sm py-2 px-3"
                         />
                     </div>
-                    <div>
+                    <div class="sm:col-span-2">
                         <label
                             class="block text-sm font-medium text-[#14202B] mb-1"
-                            >Shipping Zone</label
+                            >Pin Location</label
                         >
-                        <select
-                            v-model="addressForm.zone"
-                            class="w-full rounded-md border border-gray-300 text-sm py-2 px-3"
+                        <LocationPicker
+                            :model-lat="addressForm.latitude"
+                            :model-lng="addressForm.longitude"
+                            @update:location="handleLocationUpdate"
+                        />
+                        <p
+                            v-if="addressForm.latitude && addressForm.longitude"
+                            class="mt-1 text-xs text-[#14202B]/50"
                         >
-                            <option
-                                v-for="(cfg, key) in SHIPPING_ZONES"
-                                :key="key"
-                                :value="key"
-                            >
-                                {{ cfg.label }}
-                            </option>
-                        </select>
+                            {{ addressForm.latitude.toFixed(6) }},
+                            {{ addressForm.longitude.toFixed(6) }}
+                        </p>
                     </div>
                 </div>
 

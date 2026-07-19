@@ -39,6 +39,8 @@ export interface Address {
     postal_code: string;
     zone: ShippingZone;
     is_default?: boolean;
+    latitude?: number | null;
+    longitude?: number | null;
 }
 
 /**
