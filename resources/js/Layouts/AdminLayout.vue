@@ -40,10 +40,6 @@ const sidebarMenus = [
                 menuName: "Couriers",
                 route: route("admin.couriers"),
             },
-            {
-                menuName: "Shipping Zones",
-                route: route("admin.shipping"),
-            },
         ],
     },
     {
