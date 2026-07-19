@@ -33,10 +33,6 @@ const sidebarMenus = [
         children: [
             { menuName: "Orders", route: route("admin.orders") },
             {
-                menuName: "Daily Sales Report",
-                route: route("admin.sales"),
-            },
-            {
                 menuName: "Couriers",
                 route: route("admin.couriers"),
             },
