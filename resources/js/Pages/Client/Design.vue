@@ -153,7 +153,10 @@ const statusFilters: { label: string; value: DesignRequestStatus | "All" }[] = [
     { label: "Revision Requested", value: "revision_requested" },
     { label: "Waiting for Down Payment", value: "waiting_for_down_payment" },
     { label: "Waiting for Approval", value: "waiting_for_approval" },
-    { label: "Pending Down Payment Review", value: "pending_down_payment_review" },
+    {
+        label: "Pending Down Payment Review",
+        value: "pending_down_payment_review",
+    },
     { label: "Approved", value: "approved" },
 ];
 
@@ -185,7 +188,7 @@ const statusBadge: Record<
     },
     pending_down_payment_review: {
         label: "Pending Down Payment Review",
-        class: "bg-red-100 text-red-700",  
+        class: "bg-red-100 text-red-700",
     },
     approved: { label: "Approved", class: "bg-green-100 text-green-700" },
 };
@@ -200,6 +203,8 @@ const columns = [
     { key: "created_at", label: "Submitted", slot: "date" },
     { key: "actions", label: "Action", slot: "actions" },
 ];
+
+const gcashQrImage = "https://placehold.co/300x300?text=GCash+QR";
 
 const filteredByStatus = computed<DesignRequest[]>(() => {
     if (activeStatus.value === "All") return requests;
@@ -567,17 +572,60 @@ function submitPayment() {
 
                 <!-- GCash instructions -->
                 <div
-                    class="rounded-lg border border-[#2E7D4F]/20 bg-[#2E7D4F]/5 p-3 mb-4 text-sm"
+                    class="rounded-lg border border-[#2E7D4F]/20 bg-[#2E7D4F]/5 p-3 mb-4"
                 >
-                    <p class="font-semibold text-[#14202B] mb-1">
+                    <p class="text-sm font-semibold text-[#14202B] mb-3">
                         <font-awesome-icon icon="fa-solid fa-circle-info" />
-                        Send payment via GCash to:
+                        Send payment via GCash
                     </p>
-                    <p class="text-[#14202B]">0917 123 4567 (Juan D.)</p>
-                    <p class="text-[#14202B]/60 text-xs mt-1">
-                        After sending, fill out the details below and upload
-                        your receipt screenshot.
-                    </p>
+
+                    <div
+                        class="flex flex-col items-center gap-4 sm:flex-row sm:items-start"
+                    >
+                        <!-- QR code -->
+                        <div
+                            class="flex flex-shrink-0 flex-col items-center gap-1.5"
+                        >
+                            <div
+                                class="flex h-32 w-32 items-center justify-center overflow-hidden rounded-lg border border-[#14202B]/10 bg-white p-1.5"
+                            >
+                                <img
+                                    :src="gcashQrImage"
+                                    alt="GCash QR code"
+                                    class="h-full w-full object-contain"
+                                />
+                            </div>
+                            <span
+                                class="text-[10px] font-medium uppercase tracking-wide text-[#14202B]/40"
+                            >
+                                Scan to pay
+                            </span>
+                        </div>
+
+                        <!-- Account details -->
+                        <div class="flex-1 text-sm">
+                            <p
+                                class="text-[10px] font-medium uppercase tracking-wide text-[#14202B]/40"
+                            >
+                                Account Name
+                            </p>
+                            <p class="text-[#14202B] font-medium">Juan D.</p>
+
+                            <p
+                                class="mt-2 text-[10px] font-medium uppercase tracking-wide text-[#14202B]/40"
+                            >
+                                Account Number
+                            </p>
+                            <p class="text-[#14202B] font-medium">
+                                0917 123 4567
+                            </p>
+
+                            <p class="mt-2 text-xs text-[#14202B]/60">
+                                After sending, fill out the details below and
+                                upload your receipt screenshot.
+                            </p>
+                        </div>
+                    </div>
                 </div>
 
                 <form
