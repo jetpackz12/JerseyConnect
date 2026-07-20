@@ -222,7 +222,7 @@ const toggleSubmenu = (menuName) => {
 
                 <div class="flex items-center gap-2">
                     <Link
-                        :href="route('admin.dashboard')"
+                        :href="route('admin.profile')"
                         method="get"
                         as="button"
                         class="px-4 py-2 text-paper bg-ink hover:bg-warn hover:text-ink rounded-lg transition"

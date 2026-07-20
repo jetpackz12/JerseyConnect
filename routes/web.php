@@ -82,6 +82,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/users', function () {
         return Inertia::render('Admin/Users');
     })->name('users');
+    
+    Route::get('profile', function () {
+        return Inertia::render('Admin/Profile');
+    })->name('profile');
 });
 
 Route::middleware('auth')->group(function () {
