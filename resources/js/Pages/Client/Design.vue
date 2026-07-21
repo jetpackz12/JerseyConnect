@@ -105,7 +105,7 @@ const mockDesignRequests: DesignRequest[] = [
         secondary_color: "#7F8C8D",
         accent_color: "#F5C518",
         estimated_quantity: 40,
-        status: "waiting_for_approval",
+        status: "waiting_for_down_payment",
         font_style: "Military Stencil",
         notes: null,
         created_at: "2026-07-10T08:30:00Z",
@@ -126,22 +126,6 @@ const mockDesignRequests: DesignRequest[] = [
         notes: null,
         created_at: "2026-06-20T11:22:00Z",
     },
-    {
-        id: 7,
-        template_id: 1,
-        template_name: "Minimalist Crest",
-        template_image: "/images/image4.png",
-        template_price: 249,
-        team_name: "Arevalo Titans",
-        primary_color: "#1F618D",
-        secondary_color: "#FFFFFF",
-        accent_color: "#1F618D",
-        estimated_quantity: 12,
-        status: "pending_down_payment_review",
-        font_style: "Sans Condensed",
-        notes: null,
-        created_at: "2026-06-20T11:22:00Z",
-    },
 ];
 
 const requests = props.requests ?? mockDesignRequests;
@@ -152,7 +136,6 @@ const statusFilters: { label: string; value: DesignRequestStatus | "All" }[] = [
     { label: "In Discussion", value: "in_discussion" },
     { label: "Revision Requested", value: "revision_requested" },
     { label: "Waiting for Down Payment", value: "waiting_for_down_payment" },
-    { label: "Waiting for Approval", value: "waiting_for_approval" },
     {
         label: "Pending Down Payment Review",
         value: "pending_down_payment_review",
@@ -181,10 +164,6 @@ const statusBadge: Record<
     waiting_for_down_payment: {
         label: "Waiting for Down Payment",
         class: "bg-pink-100 text-pink-700",
-    },
-    waiting_for_approval: {
-        label: "Waiting for Approval",
-        class: "bg-indigo-100 text-indigo-700",
     },
     pending_down_payment_review: {
         label: "Pending Down Payment Review",
@@ -411,7 +390,6 @@ function submitPayment() {
                                 row.status !== 'approved' &&
                                 row.status !== 'revision_requested' &&
                                 row.status !== 'waiting_for_down_payment' &&
-                                row.status !== 'waiting_for_approval' &&
                                 row.status !== 'pending_down_payment_review'
                             "
                             type="button"

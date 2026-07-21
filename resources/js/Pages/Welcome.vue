@@ -84,8 +84,8 @@ function onKeydown(e: KeyboardEvent) {
                         :href="route('client.home')"
                         class="text-sm font-semibold bg-ink text-paper px-4 py-2 rounded-md hover:bg-ink/90 transition-colors"
                     >
-                        <font-awesome-icon icon="fa-solid fa-house" />
-                        Home
+                        Back
+                        <font-awesome-icon icon="fa-solid fa-angles-right" />
                     </Link>
                     <template v-else>
                         <Link
@@ -188,8 +188,10 @@ function onKeydown(e: KeyboardEvent) {
                             class="text-center text-sm font-semibold bg-ink text-paper px-4 py-3 rounded-md hover:bg-ink/90 transition-colors"
                             @click="closeMobileMenu"
                         >
-                            <font-awesome-icon icon="fa-solid fa-house" />
-                            Home
+                            Back
+                            <font-awesome-icon
+                                icon="fa-solid fa-angles-right"
+                            />
                         </Link>
                         <template v-else>
                             <Link

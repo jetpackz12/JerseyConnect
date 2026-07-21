@@ -1,195 +1,196 @@
 <script setup lang="ts">
 import AdminLayout from "@/Layouts/AdminLayout.vue";
-import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
-import { Head } from "@inertiajs/vue3";
-import { ref, computed } from "vue";
+import { Head, Link } from "@inertiajs/vue3";
+import { ref, computed, onMounted } from "vue";
+import type {
+    MessageThread,
+    ThreadMessage,
+    ConversationStage,
+} from "@/types/messages";
 
-// ── Types ────────────────────────────────────────────────────────────────────
-type ThreadType = "booking_reminder" | "booking_confirmed" | "message";
-type MessageSender = "admin" | "client";
-
-interface ThreadMessage {
-    id: string;
-    from: MessageSender;
-    name: string;
-    body: string;
-    time: string;
-}
-
-interface Thread {
-    id: number;
-    type: ThreadType;
-    read: boolean;
-    client: string;
-    ref: string;
-    subject: string;
-    date: string;
-    time: string;
-    messages: ThreadMessage[];
-    canReply: boolean;
-}
-
-interface ComposeForm {
-    client: string;
-    type: ThreadType;
-    subject: string;
-    body: string;
-    sender: string;
-}
-
-type TabKey = "all" | "bookings" | "messages";
-
-interface Tab {
-    key: TabKey;
-    label: string;
-}
-
-interface AuthProp {
-    [key: string]: unknown;
-}
-
+// ── Props ────────────────────────────────────────────────────────────────────
+// Arriving from a "Message" button on the Design Request or Order tables:
+//   route('admin.messages', { design_request_id: row.id })              // from Design Requests
+//   route('admin.messages', { design_request_id: row.design_request_id }) // from Orders
+// Both resolve to the SAME thread because a thread is keyed by design_request_id.
 const props = withDefaults(
     defineProps<{
-        threads?: Thread[];
-        auth?: AuthProp;
+        threads?: MessageThread[];
+        design_request_id?: number | string | null;
     }>(),
     {
         threads: () => [],
-        auth: () => ({}),
+        design_request_id: null,
     },
 );
 
-// ── Static data (swap for props.threads later) ──────────────────────────────
-const mockThreads = ref<Thread[]>([
+// ── Static mock data (swap for props.threads once the backend is wired up) ──
+const mockThreads = ref<MessageThread[]>([
     {
         id: 1,
-        type: "booking_reminder",
-        read: false,
-        client: "Juan dela Cruz",
-        ref: "BSH-2025-0042",
-        subject: "Booking Reminder – June 17",
-        date: "Jun 16",
-        time: "08:00 AM",
+        design_request_id: 2,
+        design_request_ref: "DR-2026-0002",
+        order_id: null,
+        order_ref: null,
+        stage: "design",
+        status_key: "in_discussion",
+        status_label: "In Discussion",
+        status_class: "bg-blue-100 text-blue-700",
+        team_name: "Molo Warriors",
+        template_name: "Vortex Fade",
+        template_image: "/images/image2.png",
+        client_name: "Renz Villaflor",
+        read: true,
+        updated_at: "2026-07-18T14:45:00Z",
+        closed: false,
         messages: [
             {
                 id: "m1",
+                from: "client",
+                name: "Renz Villaflor",
+                body: "Hi! Can we make the fade go from green to yellow instead of green to navy?",
+                time: "Jul 18, 2:10 PM",
+            },
+            {
+                id: "m2",
                 from: "admin",
-                name: "System",
-                body: "Reminder sent to client: booking tomorrow, June 17 at 2:00 PM – Captain's Experience Package for 4 guests.",
-                time: "08:00 AM",
+                name: "Captain Rodel",
+                body: "Sure, that works well with your accent color. I'll have the artist update the mockup and send it over.",
+                time: "Jul 18, 2:30 PM",
+            },
+            {
+                id: "m3",
+                from: "admin",
+                name: "Captain Rodel",
+                body: "Updated mockup attached — let us know if the gradient balance looks right.",
+                time: "Jul 18, 2:45 PM",
+                attachment_url: "/images/image2.png",
+                attachment_name: "vortex-fade-mockup-v2.png",
             },
         ],
-        canReply: false,
     },
     {
         id: 2,
-        type: "message",
+        design_request_id: 3,
+        design_request_ref: "DR-2026-0003",
+        order_id: null,
+        order_ref: null,
+        stage: "design",
+        status_key: "revision_requested",
+        status_label: "Revision Requested",
+        status_class: "bg-orange-100 text-orange-700",
+        team_name: "Jaro Falcons",
+        template_name: "Retro Stripe",
+        template_image: "/images/image3.png",
+        client_name: "Carlo Reyes",
         read: false,
-        client: "Juan dela Cruz",
-        ref: "BSH-2025-0042",
-        subject: "Action Required: Confirm Your Booking",
-        date: "Jun 15",
-        time: "2:30 PM",
+        updated_at: "2026-07-20T09:05:00Z",
+        closed: false,
         messages: [
             {
                 id: "m1",
-                from: "admin",
-                name: "Captain Rodel",
-                body: "Good day! Please confirm your booking scheduled for tomorrow, June 17, 2025 at 2:00 PM. Reply CONFIRM to secure your slot, or CANCEL if plans have changed.",
-                time: "2:30 PM",
-            },
-            {
-                id: "m2",
-                from: "admin",
-                name: "Captain Rodel",
-                body: "We've reserved the upper deck for your group. Free coffee and juice will be ready upon arrival.",
-                time: "2:45 PM",
-            },
-            {
-                id: "m3",
                 from: "client",
-                name: "Juan dela Cruz",
-                body: "CONFIRM! Thank you so much, see you tomorrow!",
-                time: "3:10 PM",
+                name: "Carlo Reyes",
+                body: "The sponsor logo is too close to the number on the back. Can it move down, below the number instead?",
+                time: "Jul 20, 9:05 AM",
             },
         ],
-        canReply: true,
     },
     {
         id: 3,
-        type: "booking_confirmed",
-        read: true,
-        client: "Maria Santos",
-        ref: "BSH-2025-0038",
-        subject: "Booking Confirmed – Overnight Stay",
-        date: "Jun 10",
-        time: "9:15 AM",
+        design_request_id: 4,
+        design_request_ref: "DR-2026-0004",
+        order_id: 4,
+        order_ref: "ORD-2026-0004",
+        stage: "order",
+        status_key: "shipped",
+        status_label: "Shipped",
+        status_class: "bg-indigo-100 text-indigo-700",
+        team_name: "Arevalo Titans",
+        template_name: "Minimalist Crest",
+        template_image: "/images/image4.png",
+        client_name: "Marco Villanueva",
+        read: false,
+        updated_at: "2026-07-19T14:05:00Z",
+        closed: false,
         messages: [
             {
                 id: "m1",
                 from: "admin",
                 name: "System",
-                body: "Booking confirmed for Overnight Stay Package on June 10, 2025. Reference: BSH-2025-0038.",
-                time: "9:15 AM",
+                body: "Design approved. This conversation now follows your order through production and delivery.",
+                time: "Jul 05, 10:00 AM",
+            },
+            {
+                id: "m2",
+                from: "admin",
+                name: "Captain Rodel",
+                body: "Your order has shipped via J&T Express. Tracking number: JT-88213764521.",
+                time: "Jul 19, 2:00 PM",
+            },
+            {
+                id: "m3",
+                from: "client",
+                name: "Marco Villanueva",
+                body: "Thank you! How many days until it arrives in Iloilo?",
+                time: "Jul 19, 2:05 PM",
             },
         ],
-        canReply: false,
     },
     {
         id: 4,
-        type: "message",
+        design_request_id: 9,
+        design_request_ref: "DR-2026-0009",
+        order_id: 5,
+        order_ref: "ORD-2026-0005",
+        stage: "order",
+        status_key: "delivered",
+        status_label: "Delivered",
+        status_class: "bg-teal-100 text-teal-700",
+        team_name: "Cebu Coastal Runners",
+        template_name: "Vortex Fade",
+        template_image: "/images/image2.png",
+        client_name: "Anna Bautista",
         read: true,
-        client: "Maria Santos",
-        ref: "BSH-2025-0038",
-        subject: "Welcome Aboard!",
-        date: "Jun 8",
-        time: "11:00 AM",
+        updated_at: "2026-07-14T10:00:00Z",
+        closed: false,
         messages: [
             {
                 id: "m1",
                 from: "admin",
-                name: "The Butal Ship Hauz Team",
-                body: "Thank you for choosing The Butal Ship Hauz! Check-in starts at 3:00 PM. Complimentary refreshments are served at the upper deck.",
-                time: "11:00 AM",
+                name: "System",
+                body: "Your order has been delivered. Let us know if everything checks out!",
+                time: "Jul 14, 10:00 AM",
             },
             {
                 id: "m2",
                 from: "client",
-                name: "Maria Santos",
-                body: "Thank you! Can we request an early check-in?",
-                time: "12:30 PM",
-            },
-            {
-                id: "m3",
-                from: "admin",
-                name: "Captain Rodel",
-                body: "Sure! We can accommodate early check-in by 1:00 PM at no extra charge. See you soon!",
-                time: "1:10 PM",
+                name: "Anna Bautista",
+                body: "Received, everything looks great. Thank you!",
+                time: "Jul 14, 11:20 AM",
             },
         ],
-        canReply: true,
     },
 ]);
 
 // ── State ────────────────────────────────────────────────────────────────────
+type TabKey = "all" | "design" | "order";
 const activeTab = ref<TabKey>("all");
-const activeThread = ref<Thread | null>(null);
-const isCompose = ref<boolean>(false);
+const activeThread = ref<MessageThread | null>(null);
 const replyText = ref<string>("");
-const senderName = ref<string>("Captain Rodel – Butal Ship Hauz");
+const replyImage = ref<File | null>(null);
+const replyImagePreview = ref<string | null>(null);
+const senderName = ref<string>("Captain Rodel");
 const threadBody = ref<HTMLElement | null>(null);
 
-// Compose form
-const composeForm = ref<ComposeForm>({
-    client: "Juan dela Cruz – BSH-2025-0042",
-    type: "message",
-    subject: "",
-    body: "",
-    sender: "Captain Rodel – Butal Ship Hauz",
-});
+const tabs: { key: TabKey; label: string }[] = [
+    { key: "all", label: "All" },
+    { key: "design", label: "In Design" },
+    { key: "order", label: "In Production / Delivery" },
+];
 
 // ── Computed ─────────────────────────────────────────────────────────────────
-const threads = computed<Thread[]>(() =>
+const threads = computed<MessageThread[]>(() =>
     props.threads?.length ? props.threads : mockThreads.value,
 );
 
@@ -197,50 +198,43 @@ const unreadCount = computed<number>(
     () => threads.value.filter((t) => !t.read).length,
 );
 
-const filtered = computed<Thread[]>(() => {
-    if (activeTab.value === "bookings")
-        return threads.value.filter((t) =>
-            ["booking_reminder", "booking_confirmed"].includes(t.type),
-        );
-    if (activeTab.value === "messages")
-        return threads.value.filter((t) => t.type === "message");
-    return threads.value;
+const sorted = computed<MessageThread[]>(() =>
+    [...threads.value].sort(
+        (a, b) =>
+            new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
+    ),
+);
+
+const filtered = computed<MessageThread[]>(() => {
+    if (activeTab.value === "design")
+        return sorted.value.filter((t) => t.stage === "design");
+    if (activeTab.value === "order")
+        return sorted.value.filter((t) => t.stage === "order");
+    return sorted.value;
 });
 
-const tabs: Tab[] = [
-    { key: "all", label: "All" },
-    { key: "bookings", label: "Bookings" },
-    { key: "messages", label: "Messages" },
-];
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
-function pillClass(type: ThreadType): string {
-    return (
-        {
-            booking_reminder: "bg-yellow-100 text-yellow-800",
-            booking_confirmed: "bg-green-100 text-green-800",
-            message: "bg-blue-100 text-blue-800",
-        }[type] ?? "bg-gray-100 text-gray-700"
-    );
+function lastMessagePreview(thread: MessageThread): string {
+    const last = thread.messages[thread.messages.length - 1];
+    return last ? last.body : "No messages yet";
 }
 
-function pillLabel(type: ThreadType): string {
-    return (
-        {
-            booking_reminder: "Reminder",
-            booking_confirmed: "Confirmed",
-            message: "Message",
-        }[type] ?? "Notice"
-    );
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function stagePillClass(stage: ConversationStage): string {
+    return stage === "design"
+        ? "bg-purple-100 text-purple-700"
+        : "bg-emerald-100 text-emerald-700";
+}
+
+function stagePillLabel(stage: ConversationStage): string {
+    return stage === "design" ? "Design Request" : "Order";
 }
 
 // ── Actions ──────────────────────────────────────────────────────────────────
-function openThread(thread: Thread): void {
+function openThread(thread: MessageThread): void {
     thread.read = true;
     activeThread.value = thread;
-    isCompose.value = false;
     replyText.value = "";
-    // TODO: axios.patch(route('admin.notifications.markRead', thread.id))
+    // TODO: axios.patch(route('admin.messages.markRead', thread.id))
     scrollThread();
 }
 
@@ -251,67 +245,93 @@ function scrollThread(): void {
     }, 50);
 }
 
-function sendReply(thread: Thread): void {
-    if (!replyText.value.trim()) return;
-    thread.messages.push({
+function handleImageSelect(e: Event): void {
+    const target = e.target as HTMLInputElement;
+    const file = target.files?.[0];
+    if (!file) return;
+    replyImage.value = file;
+    replyImagePreview.value = URL.createObjectURL(file);
+    target.value = ""; // allow re-selecting the same file later
+}
+
+function removeReplyImage(): void {
+    replyImage.value = null;
+    replyImagePreview.value = null;
+}
+
+function openAttachment(url: string): void {
+    window.open(url, "_blank");
+}
+
+function sendReply(thread: MessageThread): void {
+    if ((!replyText.value.trim() && !replyImage.value) || thread.closed)
+        return;
+    const msg: ThreadMessage = {
         id: `${thread.id}-${Date.now()}`,
         from: "admin",
-        name: senderName.value.split(" – ")[0],
+        name: senderName.value,
         body: replyText.value.trim(),
         time: "Just now",
-    });
+        attachment_url: replyImagePreview.value,
+        attachment_name: replyImage.value?.name ?? null,
+    };
+    thread.messages.push(msg);
+    thread.updated_at = new Date().toISOString();
     replyText.value = "";
+    removeReplyImage();
     scrollThread();
-    // TODO: axios.post(route('admin.notifications.reply', thread.id), { body, sender })
+    // TODO: axios.post(route('admin.messages.reply', thread.id), formData)
+    // where formData carries { body, sender, attachment } — use
+    // forceFormData / useForm() once this is wired to a real endpoint,
+    // the same way the client's GCash payment-proof upload works.
 }
 
-function deleteThread(thread: Thread): void {
-    if (!confirm("Delete this conversation? This cannot be undone.")) return;
-    const idx = mockThreads.value.findIndex((t) => t.id === thread.id);
-    if (idx > -1) mockThreads.value.splice(idx, 1);
-    activeThread.value = null;
-    // TODO: axios.delete(route('admin.notifications.destroy', thread.id))
-}
+/**
+ * Finds (or, for a brand-new design request with no admin reply yet, creates
+ * a stub for) the thread tied to a given design_request_id, and opens it.
+ * This is what makes the "Message" button on the Design Request / Order
+ * tables land on the right conversation.
+ */
+function resolveAndOpenByDesignRequestId(designRequestId: number): void {
+    const existing = threads.value.find(
+        (t) => t.design_request_id === designRequestId,
+    );
+    if (existing) {
+        openThread(existing);
+        return;
+    }
 
-function showCompose(): void {
-    isCompose.value = true;
-    activeThread.value = null;
-    composeForm.value = {
-        client: "Juan dela Cruz – BSH-2025-0042",
-        type: "message",
-        subject: "",
-        body: "",
-        sender: "Captain Rodel – Butal Ship Hauz",
-    };
-}
-
-function submitCompose(): void {
-    if (!composeForm.value.body.trim()) return;
-    const newThread: Thread = {
+    // No conversation yet — create an empty stub. In production this data
+    // (team name, template, ref, status) would come from the backend
+    // record instead of being guessed here.
+    const stub: MessageThread = {
         id: Date.now(),
-        type: composeForm.value.type,
+        design_request_id: designRequestId,
+        design_request_ref: `DR-2026-${String(designRequestId).padStart(4, "0")}`,
+        order_id: null,
+        order_ref: null,
+        stage: "design",
+        status_key: "pending_review",
+        status_label: "Pending Review",
+        status_class: "bg-yellow-100 text-yellow-700",
+        team_name: "—",
+        template_name: "—",
+        template_image: "/images/image1.png",
+        client_name: "—",
         read: true,
-        client: composeForm.value.client.split(" – ")[0],
-        ref: composeForm.value.client.split(" – ")[1] ?? "",
-        subject: composeForm.value.subject || "New message",
-        date: "Today",
-        time: "Just now",
-        messages: [
-            {
-                id: "m1",
-                from: "admin",
-                name: composeForm.value.sender.split(" – ")[0],
-                body: composeForm.value.body.trim(),
-                time: "Just now",
-            },
-        ],
-        canReply: true,
+        updated_at: new Date().toISOString(),
+        closed: false,
+        messages: [],
     };
-    mockThreads.value.unshift(newThread);
-    isCompose.value = false;
-    activeThread.value = newThread;
-    // TODO: axios.post(route('admin.notifications.store'), composeForm.value)
+    mockThreads.value.unshift(stub);
+    openThread(stub);
 }
+
+onMounted(() => {
+    if (props.design_request_id) {
+        resolveAndOpenByDesignRequestId(Number(props.design_request_id));
+    }
+});
 </script>
 
 <template>
@@ -323,27 +343,16 @@ function submitCompose(): void {
                 class="flex h-[calc(100dvh-140px)] md:h-[80dvh-40px] rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden"
             >
                 <aside
-                    class="w-full md:w-72 flex-shrink-0 border-r border-gray-200 flex-col"
-                    :class="
-                        activeThread || isCompose ? 'hidden md:flex' : 'flex'
-                    "
+                    class="w-full md:w-80 flex-shrink-0 border-r border-gray-200 flex-col"
+                    :class="activeThread ? 'hidden md:flex' : 'flex'"
                 >
                     <!-- Header -->
                     <div class="p-4 border-b border-gray-100">
-                        <div class="flex items-center gap-2 mb-3">
-                            <svg
-                                class="w-5 h-5 text-ink"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="1.5"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z"
-                                />
-                            </svg>
+                        <div class="flex items-center gap-2">
+                            <font-awesome-icon
+                                icon="fa-solid fa-comments"
+                                class="text-ink"
+                            />
                             <span class="font-semibold text-slate-900 text-sm"
                                 >Messages</span
                             >
@@ -354,13 +363,10 @@ function submitCompose(): void {
                                 {{ unreadCount }}
                             </span>
                         </div>
-                        <button
-                            class="w-full flex items-center justify-center gap-2 rounded-lg bg-ink px-4 py-2 text-sm font-medium text-white hover:bg-ink/90 transition"
-                            @click="showCompose"
-                        >
-                            <font-awesome-icon icon="fa-solid fa-pencil" />
-                            New message
-                        </button>
+                        <p class="mt-1 text-[11px] text-gray-400">
+                            Conversations are opened from a Design Request or
+                            Order.
+                        </p>
                     </div>
 
                     <!-- Tabs -->
@@ -385,46 +391,63 @@ function submitCompose(): void {
                         <div
                             v-for="thread in filtered"
                             :key="thread.id"
-                            class="relative cursor-pointer border-b border-gray-100 px-4 py-3 transition hover:bg-gray-50"
+                            class="relative flex cursor-pointer gap-2.5 border-b border-gray-100 px-4 py-3 transition hover:bg-gray-50"
                             :class="{
                                 'bg-blue-50 hover:bg-blue-50':
-                                    activeThread?.id === thread.id &&
-                                    !isCompose,
+                                    activeThread?.id === thread.id,
                                 'border-l-2 border-l-warn': !thread.read,
                             }"
                             @click="openThread(thread)"
                         >
-                            <span
-                                v-if="!thread.read"
-                                class="absolute top-3.5 right-3 h-2 w-2 rounded-full bg-warn"
+                            <img
+                                :src="thread.template_image"
+                                :alt="thread.template_name"
+                                class="h-9 w-9 flex-shrink-0 rounded object-contain bg-gray-100 p-1"
                             />
-                            <div class="flex items-center gap-1.5 mb-1">
-                                <span
-                                    class="text-xs font-medium text-slate-800"
-                                    :class="{ 'font-semibold': !thread.read }"
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-1.5">
+                                    <span
+                                        class="truncate text-xs font-medium text-slate-800"
+                                        :class="{
+                                            'font-semibold': !thread.read,
+                                        }"
+                                    >
+                                        {{ thread.team_name }}
+                                    </span>
+                                    <span
+                                        v-if="!thread.read"
+                                        class="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-warn"
+                                    />
+                                </div>
+                                <div
+                                    class="mt-1 flex flex-wrap items-center gap-1"
                                 >
-                                    {{ thread.client }}
-                                </span>
-                                <span
-                                    class="ml-auto pr-4 text-[10px] text-gray-400"
-                                    >{{ thread.date }}</span
+                                    <span
+                                        class="rounded-full px-1.5 py-0.5 text-[9px] font-semibold"
+                                        :class="stagePillClass(thread.stage)"
+                                    >
+                                        {{ stagePillLabel(thread.stage) }}
+                                    </span>
+                                    <span
+                                        class="rounded-full px-1.5 py-0.5 text-[9px] font-semibold"
+                                        :class="thread.status_class"
+                                    >
+                                        {{ thread.status_label }}
+                                    </span>
+                                    <span
+                                        class="font-mono text-[9px] text-gray-400 bg-gray-100 rounded px-1"
+                                        >{{
+                                            thread.order_ref ??
+                                            thread.design_request_ref
+                                        }}</span
+                                    >
+                                </div>
+                                <p
+                                    class="mt-1 truncate text-xs text-gray-500"
                                 >
+                                    {{ lastMessagePreview(thread) }}
+                                </p>
                             </div>
-                            <div class="flex items-center gap-1.5 mb-1">
-                                <span
-                                    class="rounded-full px-2 py-0.5 text-[10px] font-semibold"
-                                    :class="pillClass(thread.type)"
-                                >
-                                    {{ pillLabel(thread.type) }}
-                                </span>
-                                <span
-                                    class="font-mono text-[10px] text-gray-400 bg-gray-100 rounded px-1"
-                                    >{{ thread.ref }}</span
-                                >
-                            </div>
-                            <p class="truncate text-xs text-gray-500">
-                                {{ thread.subject }}
-                            </p>
                         </div>
 
                         <div
@@ -432,20 +455,18 @@ function submitCompose(): void {
                             class="flex flex-col items-center gap-2 py-16 text-center text-gray-400"
                         >
                             <span class="text-3xl">📭</span>
-                            <p class="text-sm">No threads here</p>
+                            <p class="text-sm">No conversations here</p>
                         </div>
                     </div>
                 </aside>
 
                 <main
                     class="flex-1 flex-col overflow-hidden"
-                    :class="
-                        activeThread || isCompose ? 'flex' : 'hidden md:flex'
-                    "
+                    :class="activeThread ? 'flex' : 'hidden md:flex'"
                 >
                     <!-- Empty state -->
                     <div
-                        v-if="!activeThread && !isCompose"
+                        v-if="!activeThread"
                         class="flex flex-1 flex-col items-center justify-center text-gray-400 gap-3"
                     >
                         <span class="text-5xl">
@@ -454,141 +475,18 @@ function submitCompose(): void {
                         <p class="font-medium text-gray-500">
                             Select a conversation
                         </p>
-                        <p class="text-sm">or compose a new message</p>
-                    </div>
-
-                    <!-- Compose panel -->
-                    <div
-                        v-else-if="isCompose"
-                        class="flex flex-1 flex-col overflow-y-auto p-4 sm:p-6 gap-4"
-                    >
-                        <div class="flex items-center gap-2">
-                            <button
-                                class="md:hidden -ml-1 mr-1 flex h-7 w-7 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-50 transition"
-                                aria-label="Back to messages"
-                                @click="isCompose = false"
-                            >
-                                <svg
-                                    class="w-5 h-5"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        d="M15.75 19.5 8.25 12l7.5-7.5"
-                                    />
-                                </svg>
-                            </button>
-                            <h3 class="text-base font-semibold text-slate-900">
-                                New message
-                            </h3>
-                        </div>
-
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label class="mb-1 block text-xs text-gray-500"
-                                    >To (client)</label
-                                >
-                                <select
-                                    v-model="composeForm.client"
-                                    class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-900 focus:outline-none"
-                                >
-                                    <option>
-                                        Juan dela Cruz – BSH-2025-0042
-                                    </option>
-                                    <option>
-                                        Maria Santos – BSH-2025-0038
-                                    </option>
-                                    <option>
-                                        All clients with upcoming bookings
-                                    </option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="mb-1 block text-xs text-gray-500"
-                                    >Message type</label
-                                >
-                                <select
-                                    v-model="composeForm.type"
-                                    class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-900 focus:outline-none"
-                                >
-                                    <option value="message">Message</option>
-                                    <option value="booking_reminder">
-                                        Booking reminder
-                                    </option>
-                                    <option value="booking_confirmed">
-                                        Booking confirmed
-                                    </option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="mb-1 block text-xs text-gray-500"
-                                >Subject</label
-                            >
-                            <input
-                                v-model="composeForm.subject"
-                                type="text"
-                                placeholder="e.g. Your booking is confirmed"
-                                class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-900 focus:outline-none"
-                            />
-                        </div>
-
-                        <div class="flex-1">
-                            <label class="mb-1 block text-xs text-gray-500"
-                                >Message body</label
-                            >
-                            <textarea
-                                v-model="composeForm.body"
-                                rows="7"
-                                placeholder="Write your message here…"
-                                class="w-full resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-900/10"
-                            />
-                        </div>
-
-                        <div>
-                            <label class="mb-1 block text-xs text-gray-500"
-                                >Send as</label
-                            >
-                            <select
-                                v-model="composeForm.sender"
-                                class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-900 focus:outline-none"
-                            >
-                                <option>Captain Rodel – Butal Ship Hauz</option>
-                                <option>The Butal Ship Hauz Team</option>
-                                <option>System</option>
-                            </select>
-                        </div>
-
-                        <div class="flex gap-2">
-                            <button
-                                :disabled="!composeForm.body.trim()"
-                                class="flex items-center gap-2 rounded-lg bg-blue-900 px-5 py-2 text-sm font-medium text-white hover:bg-blue-950 transition disabled:cursor-not-allowed disabled:opacity-40"
-                                @click="submitCompose"
-                            >
-                                Send message
-                                    <font-awesome-icon icon="fa-solid fa-share" />
-                            </button>
-                            <button
-                                class="rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-500 hover:bg-gray-50 transition"
-                                @click="isCompose = false"
-                            >
-                                Cancel
-                            </button>
-                        </div>
+                        <p class="text-sm">
+                            Or open one from a Design Request or Order
+                        </p>
                     </div>
 
                     <!-- Thread view -->
-                    <template v-else-if="activeThread">
+                    <template v-else>
                         <!-- Thread header -->
                         <div
                             class="flex flex-wrap items-start justify-between gap-2 border-b border-gray-100 px-4 sm:px-6 py-4"
                         >
-                            <div class="flex items-start gap-2 min-w-0">
+                            <div class="flex items-start gap-3 min-w-0">
                                 <button
                                     class="md:hidden mt-0.5 -ml-1 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-50 transition"
                                     aria-label="Back to messages"
@@ -608,41 +506,84 @@ function submitCompose(): void {
                                         />
                                     </svg>
                                 </button>
+                                <img
+                                    :src="activeThread.template_image"
+                                    :alt="activeThread.template_name"
+                                    class="h-10 w-10 flex-shrink-0 rounded object-contain bg-gray-100 p-1"
+                                />
                                 <div class="min-w-0">
                                     <h3
                                         class="text-sm font-semibold text-slate-900 truncate"
                                     >
-                                        {{ activeThread.subject }}
+                                        {{ activeThread.team_name }} —
+                                        {{ activeThread.template_name }}
                                     </h3>
                                     <div
                                         class="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500"
                                     >
-                                        <span>{{ activeThread.client }}</span>
+                                        <span>{{
+                                            activeThread.client_name
+                                        }}</span>
                                         <span
                                             class="font-mono bg-gray-100 rounded px-1"
-                                            >{{ activeThread.ref }}</span
+                                            >{{
+                                                activeThread.order_ref ??
+                                                activeThread.design_request_ref
+                                            }}</span
                                         >
                                         <span
                                             class="rounded-full px-2 py-0.5 text-[10px] font-semibold"
                                             :class="
-                                                pillClass(activeThread.type)
+                                                stagePillClass(
+                                                    activeThread.stage,
+                                                )
                                             "
                                         >
-                                            {{ pillLabel(activeThread.type) }}
+                                            {{
+                                                stagePillLabel(
+                                                    activeThread.stage,
+                                                )
+                                            }}
+                                        </span>
+                                        <span
+                                            class="rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                                            :class="activeThread.status_class"
+                                        >
+                                            {{ activeThread.status_label }}
                                         </span>
                                     </div>
                                 </div>
                             </div>
                             <div class="flex gap-2 flex-shrink-0">
-                                <button
-                                    class="flex items-center gap-1.5 rounded-lg border border-red-500 bg-red-50 px-3 py-1.5 text-sm text-red-500 hover:text-white hover:bg-red-600 transition"
-                                    @click="deleteThread(activeThread)"
+                                <Link
+                                    v-if="activeThread.stage === 'order'"
+                                    :href="
+                                        route(
+                                            'admin.orders',
+                                        )
+                                    "
+                                    class="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 transition"
                                 >
                                     <font-awesome-icon
-                                        icon="fa-solid fa-trash-can"
+                                        icon="fa-solid fa-box"
                                     />
-                                    Delete
-                                </button>
+                                    View order
+                                </Link>
+                                <Link
+                                    v-else
+                                    :href="
+                                        route(
+                                            'admin.design',
+                                            activeThread.design_request_id,
+                                        )
+                                    "
+                                    class="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 transition"
+                                >
+                                    <font-awesome-icon
+                                        icon="fa-solid fa-tshirt"
+                                    />
+                                    View design request
+                                </Link>
                             </div>
                         </div>
 
@@ -651,6 +592,17 @@ function submitCompose(): void {
                             ref="threadBody"
                             class="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-3"
                         >
+                            <div
+                                v-if="activeThread.messages.length === 0"
+                                class="flex h-full flex-col items-center justify-center gap-2 text-center text-gray-400"
+                            >
+                                <span class="text-3xl">💬</span>
+                                <p class="text-sm">
+                                    No messages yet — say hello to
+                                    {{ activeThread.client_name }} to start
+                                    the design discussion.
+                                </p>
+                            </div>
                             <div
                                 v-for="msg in activeThread.messages"
                                 :key="msg.id"
@@ -674,7 +626,16 @@ function submitCompose(): void {
                                     >
                                         {{ msg.name }}
                                     </p>
-                                    <p>{{ msg.body }}</p>
+                                    <img
+                                        v-if="msg.attachment_url"
+                                        :src="msg.attachment_url"
+                                        :alt="msg.attachment_name ?? 'Attached image'"
+                                        class="mb-1.5 max-h-56 w-full rounded-lg border border-black/10 object-cover cursor-pointer"
+                                        @click="
+                                            openAttachment(msg.attachment_url!)
+                                        "
+                                    />
+                                    <p v-if="msg.body">{{ msg.body }}</p>
                                     <p
                                         class="mt-1 text-right text-[10px] opacity-80"
                                     >
@@ -686,43 +647,98 @@ function submitCompose(): void {
 
                         <!-- Reply box -->
                         <div
-                            v-if="activeThread.canReply"
                             class="border-t border-gray-100 px-4 sm:px-6 py-4"
                         >
-                            <div class="mb-2 flex items-center gap-2">
-                                <span class="text-xs text-gray-500"
-                                    >Reply as:</span
-                                >
-                                <select
-                                    v-model="senderName"
-                                    class="rounded-md border border-gray-200 py-1 text-xs text-gray-700 focus:border-blue-900 focus:outline-none"
-                                >
-                                    <option>
-                                        Captain Rodel – Butal Ship Hauz
-                                    </option>
-                                    <option>The Butal Ship Hauz Team</option>
-                                </select>
+                            <div
+                                v-if="activeThread.closed"
+                                class="rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-500"
+                            >
+                                <font-awesome-icon
+                                    icon="fa-solid fa-lock"
+                                />
+                                This order is completed. The conversation is
+                                now read-only.
                             </div>
-                            <textarea
-                                v-model="replyText"
-                                rows="3"
-                                placeholder="Type your reply here…"
-                                class="w-full resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-900/10"
-                                @keydown.ctrl.enter="sendReply(activeThread)"
-                            />
-                            <div class="mt-2 flex items-center justify-between">
-                                <span class="text-[11px] text-gray-400"
-                                    >Ctrl + Enter to send</span
+                            <template v-else>
+                                <div class="mb-2 flex items-center gap-2">
+                                    <span class="text-xs text-gray-500"
+                                        >Reply as:</span
+                                    >
+                                    <select
+                                        v-model="senderName"
+                                        class="rounded-md border border-gray-200 py-1 text-xs text-gray-700 focus:border-blue-900 focus:outline-none"
+                                    >
+                                        <option>Captain Rodel</option>
+                                        <option
+                                            >The Butal Ship Hauz Team</option
+                                        >
+                                    </select>
+                                </div>
+                                <div
+                                    v-if="replyImagePreview"
+                                    class="relative mb-2 inline-block"
                                 >
-                                <button
-                                    :disabled="!replyText.trim()"
-                                    class="flex items-center gap-2 rounded-lg bg-ink px-4 py-1.5 text-sm font-semibold text-white hover:bg-ink/90 transition disabled:cursor-not-allowed disabled:opacity-40"
-                                    @click="sendReply(activeThread)"
+                                    <img
+                                        :src="replyImagePreview"
+                                        alt="Attachment preview"
+                                        class="max-h-32 rounded-lg border border-gray-200 object-cover"
+                                    />
+                                    <button
+                                        type="button"
+                                        class="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] text-white hover:bg-red-500"
+                                        @click="removeReplyImage"
+                                    >
+                                        <font-awesome-icon
+                                            icon="fa-solid fa-xmark"
+                                        />
+                                    </button>
+                                </div>
+                                <textarea
+                                    v-model="replyText"
+                                    rows="3"
+                                    placeholder="Type your reply here…"
+                                    class="w-full resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-900/10"
+                                    @keydown.ctrl.enter="
+                                        sendReply(activeThread)
+                                    "
+                                />
+                                <div
+                                    class="mt-2 flex items-center justify-between"
                                 >
-                                    Send
-                                    <font-awesome-icon icon="fa-solid fa-paper-plane" />
-                                </button>
-                            </div>
+                                    <div class="flex items-center gap-2">
+                                        <label
+                                            class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs text-gray-600 hover:bg-gray-50 transition"
+                                        >
+                                            <font-awesome-icon
+                                                icon="fa-solid fa-image"
+                                            />
+                                            Attach image
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                class="hidden"
+                                                @change="handleImageSelect"
+                                            />
+                                        </label>
+                                        <span
+                                            class="hidden text-[11px] text-gray-400 sm:inline"
+                                            >Ctrl + Enter to send</span
+                                        >
+                                    </div>
+                                    <button
+                                        :disabled="
+                                            !replyText.trim() && !replyImage
+                                        "
+                                        class="flex items-center gap-2 rounded-lg bg-ink px-4 py-1.5 text-sm font-semibold text-white hover:bg-ink/90 transition disabled:cursor-not-allowed disabled:opacity-40"
+                                        @click="sendReply(activeThread)"
+                                    >
+                                        Send
+                                        <font-awesome-icon
+                                            icon="fa-solid fa-paper-plane"
+                                        />
+                                    </button>
+                                </div>
+                            </template>
                         </div>
                     </template>
                 </main>

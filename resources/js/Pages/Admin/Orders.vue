@@ -5,7 +5,8 @@ import Modal from "@/Components/Modal.vue";
 import SecondaryButton from "@/Components/SecondaryButton.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
 import type { Order, OrderStatus, CourierReceipt } from "@/types/orders.ts";
-import { SHIPPING_ZONES, formatCurrency } from "@/Composables/shipping";
+import { activeCouriers, getCourierById } from "@/types/couriers";
+import { formatCurrency } from "@/Composables/shipping";
 import { useModal } from "@/Composables/useModal";
 import { Head, Link } from "@inertiajs/vue3";
 import { ref, computed, reactive } from "vue";
@@ -40,11 +41,10 @@ const mockOrders: Order[] = [
             city: "Iloilo City",
             province: "Iloilo",
             postal_code: "5000",
-            zone: "metro_iloilo",
             is_default: true,
         },
-        shipping_fee: 0,
-        status: "in_production",
+        shipping_fee: null,
+        status: "processing",
         courier_receipt: null,
         created_at: "2026-06-21T09:00:00Z",
         updated_at: "2026-07-05T10:00:00Z",
@@ -70,20 +70,11 @@ const mockOrders: Order[] = [
             city: "Cebu City",
             province: "Cebu",
             postal_code: "6000",
-            zone: "other_visayas",
             is_default: true,
         },
-        shipping_fee: 320,
-        status: "shipped",
-        courier_receipt: {
-            id: 1,
-            courier_name: "J&T Express",
-            transaction_number: "JT-88213764521",
-            tracking_url:
-                "https://www.jtexpress.ph/tracking?billcode=JT-88213764521",
-            date_shipped: "2026-07-12T14:00:00Z",
-            remarks: "3 boxes",
-        },
+        shipping_fee: null,
+        status: "in_production",
+        courier_receipt: null,
         created_at: "2026-06-10T08:30:00Z",
         updated_at: "2026-07-12T14:00:00Z",
     },
@@ -108,12 +99,120 @@ const mockOrders: Order[] = [
             city: "Quezon City",
             province: "Metro Manila",
             postal_code: "1108",
-            zone: "luzon",
+            is_default: true,
+        },
+        shipping_fee: null,
+        status: "ready_for_delivery",
+        courier_receipt: null,
+        created_at: "2026-07-15T07:00:00Z",
+        updated_at: "2026-07-15T07:00:00Z",
+    },
+    {
+        id: 4,
+        order_number: "ORD-2026-0004",
+        design_request_id: 4,
+        template_name: "Minimalist Crest",
+        template_image: "/images/image4.png",
+        team_name: "Arevalo Titans",
+        primary_color: "#1F618D",
+        secondary_color: "#FFFFFF",
+        accent_color: "#1F618D",
+        font_style: "Sans Condensed",
+        quantity: 12,
+        unit_price: 249,
+        address: {
+            id: 1,
+            recipient_name: "Marco Villanueva",
+            contact_number: "0917 123 4567",
+            line1: "Blk 4 Lot 12 Rizal St.",
+            barangay: "Arevalo",
+            city: "Iloilo City",
+            province: "Iloilo",
+            postal_code: "5000",
             is_default: true,
         },
         shipping_fee: 380,
-        status: "processing",
-        courier_receipt: null,
+        status: "shipped",
+        courier_receipt: {
+            id: 1,
+            courier_id: 1,
+            transaction_number: "JT-88213764521",
+            shipping_fee: 380,
+            date_shipped: "2026-07-12T14:00:00Z",
+            remarks: "3 boxes",
+        },
+        created_at: "2026-06-21T09:00:00Z",
+        updated_at: "2026-07-05T10:00:00Z",
+    },
+    {
+        id: 5,
+        order_number: "ORD-2026-0005",
+        design_request_id: 9,
+        template_name: "Vortex Fade",
+        template_image: "/images/image2.png",
+        team_name: "Cebu Coastal Runners",
+        primary_color: "#2E7D4F",
+        secondary_color: "#F5C518",
+        accent_color: "#14202B",
+        font_style: "Slab Serif",
+        quantity: 20,
+        unit_price: 249,
+        address: {
+            id: 2,
+            recipient_name: "Anna Bautista",
+            contact_number: "0918 555 2211",
+            line1: "88 Salinas Drive",
+            city: "Cebu City",
+            province: "Cebu",
+            postal_code: "6000",
+            is_default: true,
+        },
+        shipping_fee: 320,
+        status: "delivered",
+        courier_receipt: {
+            id: 1,
+            courier_id: 1,
+            transaction_number: "JT-88213764521",
+            shipping_fee: 320,
+            date_shipped: "2026-07-12T14:00:00Z",
+            remarks: "3 boxes",
+        },
+        created_at: "2026-06-10T08:30:00Z",
+        updated_at: "2026-07-12T14:00:00Z",
+    },
+    {
+        id: 6,
+        order_number: "ORD-2026-0006",
+        design_request_id: 11,
+        template_name: "Retro Stripe",
+        template_image: "/images/image3.png",
+        team_name: "Manila Bay Sharks",
+        primary_color: "#C0392B",
+        secondary_color: "#FFFFFF",
+        accent_color: "#F5C518",
+        font_style: "Script",
+        quantity: 15,
+        unit_price: 249,
+        address: {
+            id: 3,
+            recipient_name: "Carlo Reyes",
+            contact_number: "0920 444 7890",
+            line1: "212 Katipunan Ave",
+            city: "Quezon City",
+            province: "Metro Manila",
+            postal_code: "1108",
+            is_default: true,
+        },
+        shipping_fee: 380,
+        status: "completed",
+        courier_receipt: {
+            id: 1,
+            courier_id: 1,
+            transaction_number: "JT-88213764521",
+            shipping_fee: 380,
+            date_shipped: "2026-07-12T14:00:00Z",
+            remarks: "3 boxes",
+        },
         created_at: "2026-07-15T07:00:00Z",
         updated_at: "2026-07-15T07:00:00Z",
     },
@@ -124,7 +223,9 @@ const orders = computed<Order[]>(() => props.orders ?? mockOrders);
 // ---------------------------------------------------------------------------
 // Stats (top summary cards)
 // ---------------------------------------------------------------------------
-function orderTotal(order: Order): number {
+/** Returns null while the shipping fee is still unknown (pre-shipment). */
+function orderTotal(order: Order): number | null {
+    if (order.shipping_fee === null) return null;
     return order.quantity * order.unit_price + order.shipping_fee;
 }
 
@@ -139,7 +240,6 @@ const statusFilters: { label: string; value: OrderStatus | "All" }[] = [
     { label: "Shipped", value: "shipped" },
     { label: "Delivered", value: "delivered" },
     { label: "Completed", value: "completed" },
-    { label: "Cancelled", value: "cancelled" },
 ];
 
 const activeStatus = ref<OrderStatus | "All">("All");
@@ -158,11 +258,9 @@ const statusBadge: Record<OrderStatus, { label: string; class: string }> = {
     shipped: { label: "Shipped", class: "bg-indigo-100 text-indigo-700" },
     delivered: { label: "Delivered", class: "bg-teal-100 text-teal-700" },
     completed: { label: "Completed", class: "bg-green-100 text-green-700" },
-    cancelled: { label: "Cancelled", class: "bg-red-100 text-red-700" },
 };
 
-// Statuses can only move forward, in this order. Admin can also cancel from
-// any non-terminal state.
+// Statuses can only move forward, in this order.
 const statusFlow: OrderStatus[] = [
     "processing",
     "in_production",
@@ -175,15 +273,23 @@ const statusFlow: OrderStatus[] = [
 function nextAllowedStatuses(current: OrderStatus): OrderStatus[] {
     const idx = statusFlow.indexOf(current);
     if (idx === -1) return [];
-    const forward = statusFlow.slice(idx + 1);
-    return [...forward, "cancelled"];
+    return statusFlow.slice(idx + 1);
+}
+
+/** Couriers available to pick from in the status-update form. */
+const courierOptions = computed(() => activeCouriers());
+
+/** Convenience accessor: the Courier record tied to an order's receipt. */
+function courierFor(order: Order) {
+    if (!order.courier_receipt) return undefined;
+    return getCourierById(order.courier_receipt.courier_id);
 }
 
 const columns = [
     { key: "template_name", label: "Order", slot: "template" },
     { key: "customer", label: "Customer", slot: "customer" },
     { key: "quantity", label: "Qty" },
-    { key: "zone", label: "Destination", slot: "zone" },
+    { key: "destination", label: "Destination", slot: "destination" },
     { key: "total", label: "Total", slot: "total" },
     { key: "status", label: "Status", slot: "status" },
     { key: "tracking", label: "Tracking", slot: "tracking" },
@@ -231,40 +337,28 @@ function viewOrder(order: Order) {
 // --- Advance status / attach courier receipt ---
 const statusForm = reactive<{
     status: OrderStatus | null;
-    courier_name: string;
+    courier_id: number | null;
     transaction_number: string;
-    tracking_url: string;
+    shipping_fee: number | null;
     remarks: string;
-    cancel_reason: string;
 }>({
     status: null,
-    courier_name: "",
+    courier_id: null,
     transaction_number: "",
-    tracking_url: "",
+    shipping_fee: null,
     remarks: "",
-    cancel_reason: "",
 });
 
-const courierOptions = [
-    "LBC Express",
-    "J&T Express",
-    "Grab Express",
-    "Lalamove",
-    "2GO Express",
-];
-
 const needsCourierReceipt = computed(() => statusForm.status === "shipped");
-const isCancelling = computed(() => statusForm.status === "cancelled");
 
 function openStatusModal(order: Order) {
     selectedOrder.value = order;
     statusForm.status = nextAllowedStatuses(order.status)[0] ?? null;
-    statusForm.courier_name = order.courier_receipt?.courier_name ?? "";
+    statusForm.courier_id = order.courier_receipt?.courier_id ?? null;
     statusForm.transaction_number =
         order.courier_receipt?.transaction_number ?? "";
-    statusForm.tracking_url = order.courier_receipt?.tracking_url ?? "";
+    statusForm.shipping_fee = order.courier_receipt?.shipping_fee ?? null;
     statusForm.remarks = "";
-    statusForm.cancel_reason = "";
     modal.title.value = "Update Order Status";
     modal.type.value = "UpdateStatus";
     modal.icon.value = "fa-solid fa-truck";
@@ -278,27 +372,34 @@ function submitStatusUpdate() {
     // router.patch(route('admin.orders.updateStatus', selectedOrder.value.id), { ...statusForm })
     selectedOrder.value.status = statusForm.status;
 
-    if (statusForm.status === "shipped") {
+    if (
+        statusForm.status === "shipped" &&
+        statusForm.courier_id !== null &&
+        statusForm.shipping_fee !== null
+    ) {
         const receipt: CourierReceipt = {
-            courier_name: statusForm.courier_name,
+            courier_id: statusForm.courier_id,
             transaction_number: statusForm.transaction_number,
-            tracking_url: statusForm.tracking_url,
+            shipping_fee: statusForm.shipping_fee,
             date_shipped: new Date().toISOString(),
             remarks: statusForm.remarks || null,
         };
         selectedOrder.value.courier_receipt = receipt;
+        // The order-level shipping fee (and therefore the final total) is
+        // only known from this point on.
+        selectedOrder.value.shipping_fee = statusForm.shipping_fee;
     }
     closeModal();
 }
 
 const isFormValid = computed(() => {
     if (!statusForm.status) return false;
-    if (isCancelling.value) return statusForm.cancel_reason.trim() !== "";
     if (needsCourierReceipt.value) {
         return (
-            statusForm.courier_name.trim() !== "" &&
+            statusForm.courier_id !== null &&
             statusForm.transaction_number.trim() !== "" &&
-            statusForm.tracking_url.trim() !== ""
+            statusForm.shipping_fee !== null &&
+            statusForm.shipping_fee >= 0
         );
     }
     return true;
@@ -388,7 +489,7 @@ function formatDate(value: string) {
                             </div>
                         </template>
 
-                        <template #zone="{ row }">
+                        <template #destination="{ row }">
                             <div class="flex flex-col items-center text-xs">
                                 <span class="font-medium text-[#14202B]">{{
                                     row.address.province
@@ -400,20 +501,22 @@ function formatDate(value: string) {
                         </template>
 
                         <template #total="{ row }">
-                            <div class="flex flex-col items-center text-xs">
+                            <div
+                                v-if="orderTotal(row) !== null"
+                                class="flex flex-col items-center text-xs"
+                            >
                                 <span class="font-semibold text-[#14202B]">{{
-                                    formatCurrency(orderTotal(row))
+                                    formatCurrency(orderTotal(row)!)
                                 }}</span>
                                 <span class="text-[#14202B]/40">
                                     incl.
-                                    {{
-                                        row.shipping_fee > 0
-                                            ? formatCurrency(row.shipping_fee) +
-                                              " shipping"
-                                            : "free local delivery"
-                                    }}
+                                    {{ formatCurrency(row.shipping_fee!) }}
+                                    shipping
                                 </span>
                             </div>
+                            <span v-else class="text-xs text-[#14202B]/40">
+                                Pending shipping fee
+                            </span>
                         </template>
 
                         <template #status="{ row }">
@@ -426,12 +529,17 @@ function formatDate(value: string) {
                         </template>
 
                         <template #tracking="{ row }">
-                            <span
+                            <div
                                 v-if="row.courier_receipt"
-                                class="inline-flex items-center gap-1 font-medium text-blue-600"
+                                class="flex flex-col text-xs"
                             >
-                                {{ row.courier_receipt.transaction_number }}
-                            </span>
+                                <span class="font-medium text-blue-600">{{
+                                    row.courier_receipt.transaction_number
+                                }}</span>
+                                <span class="text-[#14202B]/40">{{
+                                    courierFor(row)?.name ?? "Unknown courier"
+                                }}</span>
+                            </div>
                             <span v-else class="text-xs text-[#14202B]/40"
                                 >—</span
                             >
@@ -453,10 +561,7 @@ function formatDate(value: string) {
                                 </button>
 
                                 <button
-                                    v-if="
-                                        row.status !== 'completed' &&
-                                        row.status !== 'cancelled'
-                                    "
+                                    v-if="row.status !== 'completed'"
                                     type="button"
                                     class="text-xs font-medium bg-gray-600 text-white rounded-md px-2 py-2 transition-colors hover:bg-gray-500"
                                     @click="openStatusModal(row)"
@@ -468,6 +573,7 @@ function formatDate(value: string) {
                                 </button>
 
                                 <Link
+                                    v-if="row.status !== 'completed'"
                                     class="text-xs font-medium bg-orange-600 text-white rounded-md px-2 py-2 transition-colors hover:bg-orange-500"
                                     :href="route('admin.messages')"
                                 >
@@ -479,8 +585,12 @@ function formatDate(value: string) {
 
                                 <a
                                     class="text-xs font-medium bg-ink text-white rounded-md px-2 py-2 transition-colors hover:bg-ink/90"
-                                    v-if="row.courier_receipt"
-                                    :href="row.courier_receipt.tracking_url"
+                                    v-if="
+                                        row.courier_receipt &&
+                                        row.status === 'shipped' &&
+                                        courierFor(row)
+                                    "
+                                    :href="courierFor(row)!.site"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                 >
@@ -598,17 +708,6 @@ function formatDate(value: string) {
                                 {{ selectedOrder.address.province }}
                                 {{ selectedOrder.address.postal_code }}
                             </p>
-                            <p class="text-xs text-[#14202B]/50 mt-1">
-                                {{
-                                    SHIPPING_ZONES[selectedOrder.address.zone]
-                                        .label
-                                }}
-                                •
-                                {{
-                                    SHIPPING_ZONES[selectedOrder.address.zone]
-                                        .eta
-                                }}
-                            </p>
                             <p class="text-xs text-[#14202B]/40 mt-1">
                                 Address is managed by the customer. Ask them to
                                 update it from their account if it's incorrect.
@@ -641,11 +740,11 @@ function formatDate(value: string) {
                             >
                                 <span>Shipping fee</span>
                                 <span>{{
-                                    selectedOrder.shipping_fee > 0
+                                    selectedOrder.shipping_fee !== null
                                         ? formatCurrency(
                                               selectedOrder.shipping_fee,
                                           )
-                                        : "Free (local)"
+                                        : "To be determined"
                                 }}</span>
                             </div>
                             <hr class="my-2" />
@@ -654,7 +753,11 @@ function formatDate(value: string) {
                             >
                                 <span>Total</span>
                                 <span>{{
-                                    formatCurrency(orderTotal(selectedOrder))
+                                    orderTotal(selectedOrder) !== null
+                                        ? formatCurrency(
+                                              orderTotal(selectedOrder)!,
+                                          )
+                                        : "Pending shipping fee"
                                 }}</span>
                             </div>
                         </div>
@@ -678,8 +781,8 @@ function formatDate(value: string) {
                                 <p>
                                     Courier:
                                     {{
-                                        selectedOrder.courier_receipt
-                                            .courier_name
+                                        courierFor(selectedOrder)?.name ??
+                                        "Unknown courier"
                                     }}
                                 </p>
                                 <p>
@@ -687,6 +790,15 @@ function formatDate(value: string) {
                                     {{
                                         selectedOrder.courier_receipt
                                             .transaction_number
+                                    }}
+                                </p>
+                                <p>
+                                    Shipping fee (from receipt):
+                                    {{
+                                        formatCurrency(
+                                            selectedOrder.courier_receipt
+                                                .shipping_fee,
+                                        )
                                     }}
                                 </p>
                                 <p>
@@ -703,10 +815,8 @@ function formatDate(value: string) {
                                     {{ selectedOrder.courier_receipt.remarks }}
                                 </p>
                                 <a
-                                    :href="
-                                        selectedOrder.courier_receipt
-                                            .tracking_url
-                                    "
+                                    v-if="courierFor(selectedOrder)"
+                                    :href="courierFor(selectedOrder)!.site"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     class="inline-flex items-center gap-1 mt-1 text-blue-600 hover:underline"
@@ -724,10 +834,7 @@ function formatDate(value: string) {
 
                         <div class="flex justify-end">
                             <PrimaryButton
-                                v-if="
-                                    selectedOrder.status !== 'completed' &&
-                                    selectedOrder.status !== 'cancelled'
-                                "
+                                v-if="selectedOrder.status !== 'completed'"
                                 @click="
                                     () => {
                                         const order = selectedOrder!;
@@ -783,10 +890,10 @@ function formatDate(value: string) {
                     class="mt-4 border-t border-[#14202B]/10 pt-4 space-y-3"
                 >
                     <p class="text-xs text-[#14202B]/60">
-                        No courier API is connected — paste the
-                        transaction/waybill number and the tracking link the
-                        courier gave you at drop-off. The customer will see this
-                        as a "Track Package" link.
+                        No courier API is connected — enter the transaction
+                        number and shipping fee from the courier's receipt.
+                        The tracking site is pulled from the Courier module,
+                        so there's nothing to paste in for that.
                     </p>
 
                     <div>
@@ -795,18 +902,27 @@ function formatDate(value: string) {
                             >Courier</label
                         >
                         <select
-                            v-model="statusForm.courier_name"
+                            v-model.number="statusForm.courier_id"
                             class="w-full rounded-md border border-gray-300 text-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500"
                         >
-                            <option value="" disabled>Select courier</option>
+                            <option :value="null" disabled>
+                                Select courier
+                            </option>
                             <option
                                 v-for="c in courierOptions"
-                                :key="c"
-                                :value="c"
+                                :key="c.id"
+                                :value="c.id"
                             >
-                                {{ c }}
+                                {{ c.name }}
                             </option>
                         </select>
+                        <p
+                            v-if="courierOptions.length === 0"
+                            class="mt-1 text-xs text-red-600"
+                        >
+                            No active couriers found. Add or activate one in
+                            the Couriers module first.
+                        </p>
                     </div>
 
                     <div>
@@ -825,12 +941,14 @@ function formatDate(value: string) {
                     <div>
                         <label
                             class="block text-sm font-medium text-[#14202B] mb-1"
-                            >Tracking Link</label
+                            >Shipping Fee (from receipt)</label
                         >
                         <input
-                            v-model="statusForm.tracking_url"
-                            type="url"
-                            placeholder="https://courier-site.com/track?..."
+                            v-model.number="statusForm.shipping_fee"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            placeholder="e.g. 380"
                             class="w-full rounded-md border border-gray-300 text-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
                     </div>
@@ -849,33 +967,10 @@ function formatDate(value: string) {
                     </div>
                 </div>
 
-                <div
-                    v-if="isCancelling"
-                    class="mt-4 border-t border-[#14202B]/10 pt-4"
-                >
-                    <label class="block text-sm font-medium text-[#14202B] mb-1"
-                        >Reason for cancellation</label
-                    >
-                    <textarea
-                        v-model="statusForm.cancel_reason"
-                        rows="3"
-                        placeholder="e.g. Customer requested cancellation, payment not received..."
-                        class="w-full rounded-md border border-gray-300 text-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-red-400"
-                    />
-                    <p class="mt-1 text-xs text-[#14202B]/40">
-                        This will be shown to the customer in their order
-                        history.
-                    </p>
-                </div>
-
                 <div class="mt-6 flex justify-between">
                     <SecondaryButton @click="closeModal">Close</SecondaryButton>
-                    <PrimaryButton
-                        :disabled="!isFormValid"
-                        :class="{ 'bg-red-600 hover:bg-red-500': isCancelling }"
-                        @click="submitStatusUpdate"
-                    >
-                        {{ isCancelling ? "Cancel Order" : "Save" }}
+                    <PrimaryButton :disabled="!isFormValid" @click="submitStatusUpdate">
+                        Save
                     </PrimaryButton>
                 </div>
             </div>

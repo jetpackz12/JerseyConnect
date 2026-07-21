@@ -7,25 +7,12 @@ import type { DesignRequest } from "@/types/jersey";
  * was actually approved, even if the customer edits the design again later.
  */
 export type OrderStatus =
-    | "processing" // order created, payment/details being confirmed
+    | "processing" // order created, default status on creation
     | "in_production" // jerseys being printed/sewn
     | "ready_for_delivery" // production done, packed, waiting for courier drop-off
-    | "shipped" // handed to courier, tracking info available
+    | "shipped" // handed to courier, shipping fee + tracking info now known
     | "delivered" // courier marked it delivered
-    | "completed" // customer confirmed receipt / order closed
-    | "cancelled";
-
-/**
- * Shipping zone drives the automated shipping fee computation.
- * "metro_iloilo" is treated as the local area (no third-party courier needed).
- * Everything else is "beyond the local area" and requires a courier receipt.
- */
-export type ShippingZone =
-    | "metro_iloilo"
-    | "panay_visayas"
-    | "other_visayas"
-    | "luzon"
-    | "mindanao";
+    | "completed"; // customer confirmed receipt / order closed
 
 export interface Address {
     id?: number;
@@ -37,24 +24,24 @@ export interface Address {
     city: string;
     province: string;
     postal_code: string;
-    zone: ShippingZone;
     is_default?: boolean;
     latitude?: number | null;
     longitude?: number | null;
 }
 
 /**
- * Since there is no courier API integration, the courier "tracking" is just
- * a manually-entered transaction/waybill number plus the public tracking
- * link the courier already exposes on their own website. Whoever marks an
- * order as "shipped" (admin) fills this in once, and the customer sees a
- * read-only "Track Package" link from then on.
+ * There is no courier API integration. The shipping fee and transaction
+ * number are still entered manually by the admin from the courier's paper
+ * receipt, but the courier itself — and its tracking site — is looked up
+ * from the Courier module (see @/types/couriers.ts) via courier_id, so
+ * nobody has to retype a courier name or tracking link that's already
+ * stored there.
  */
 export interface CourierReceipt {
     id?: number;
-    courier_name: string;
+    courier_id: number;
     transaction_number: string;
-    tracking_url: string;
+    shipping_fee: number;
     date_shipped: string;
     remarks?: string | null;
 }
@@ -77,7 +64,12 @@ export interface Order {
     unit_price: number;
 
     address: Address;
-    shipping_fee: number;
+
+    /**
+     * Unknown (null) until the order is marked "shipped" — at that point it
+     * is copied over from courier_receipt.shipping_fee.
+     */
+    shipping_fee: number | null;
 
     status: OrderStatus;
     courier_receipt: CourierReceipt | null;
@@ -101,6 +93,9 @@ export function buildOrderFromDesignRequest(
         font_style: request.font_style ?? "",
         quantity: request.estimated_quantity,
         unit_price: request.template_price,
+        status: "processing",
+        shipping_fee: null,
+        courier_receipt: null,
         ...overrides,
     };
 }

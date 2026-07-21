@@ -111,26 +111,10 @@ const mockDesignRequests: DesignRequest[] = [
         secondary_color: "#7F8C8D",
         accent_color: "#F5C518",
         estimated_quantity: 40,
-        status: "waiting_for_approval",
+        status: "waiting_for_down_payment",
         font_style: "Military Stencil",
         notes: null,
         created_at: "2026-07-10T08:30:00Z",
-    },
-    {
-        id: 7,
-        template_id: 1,
-        template_name: "Minimalist Crest",
-        template_image: "/images/image4.png",
-        template_price: 249,
-        team_name: "Arevalo Titans",
-        primary_color: "#1F618D",
-        secondary_color: "#FFFFFF",
-        accent_color: "#1F618D",
-        estimated_quantity: 12,
-        status: "waiting_for_down_payment",
-        font_style: "Sans Condensed",
-        notes: null,
-        created_at: "2026-06-20T11:22:00Z",
     },
     {
         id: 7,
@@ -158,7 +142,6 @@ const statusFilters: { label: string; value: DesignRequestStatus | "All" }[] = [
     { label: "In Discussion", value: "in_discussion" },
     { label: "Revision Requested", value: "revision_requested" },
     { label: "Waiting for Down Payment", value: "waiting_for_down_payment" },
-    { label: "Waiting for Approval", value: "waiting_for_approval" },
     {
         label: "Pending Down Payment Review",
         value: "pending_down_payment_review",
@@ -187,10 +170,6 @@ const statusBadge: Record<
     waiting_for_down_payment: {
         label: "Waiting for Down Payment",
         class: "bg-pink-100 text-pink-700",
-    },
-    waiting_for_approval: {
-        label: "Waiting for Approval",
-        class: "bg-indigo-100 text-indigo-700",
     },
     pending_down_payment_review: {
         label: "Pending Down Payment Review",
@@ -291,10 +270,6 @@ const designRequestsStatus = [
     {
         value: "waiting_for_down_payment",
         label: "Waiting for Down Payment",
-    },
-    {
-        value: "waiting_for_approval",
-        label: "Waiting for Approval",
     },
     {
         value: "pending_down_payment_review",
@@ -491,7 +466,6 @@ function submitEdit() {
                                 row.status !== 'approved' &&
                                 row.status !== 'revision_requested' &&
                                 row.status !== 'waiting_for_down_payment' &&
-                                row.status !== 'waiting_for_approval' &&
                                 row.status !== 'pending_down_payment_review'
                             "
                             type="button"
@@ -648,7 +622,10 @@ function submitEdit() {
 
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                             <div>
-                                <InputLabel for="primary" value="Primary Color" />
+                                <InputLabel
+                                    for="primary"
+                                    value="Primary Color"
+                                />
                                 <div class="mt-1 flex items-center gap-1">
                                     <input
                                         type="color"

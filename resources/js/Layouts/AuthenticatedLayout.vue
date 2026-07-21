@@ -8,7 +8,7 @@ const isShowSideBar = ref(true);
 const page = usePage();
 
 const sidebarMenus = [
-    { menuName: "Home", route: route("client.home"), icon: "fa-solid fa-home" },
+    { menuName: "Home", route: route("client.home"), icon: "fa-solid fa-tachograph-digital" },
     {
         menuName: "My Design Requests",
         route: route("client.design.index"),
@@ -135,7 +135,7 @@ const isActive = (href: string | URL) =>
                         class="px-4 py-2 text-paper bg-ink hover:bg-warn hover:text-ink rounded-lg transition"
                     >
                         <font-awesome-icon icon="fa-solid fa-newspaper" />
-                        Feed
+                        Website
                     </Link>
                     <Link
                         :href="route('logout')"

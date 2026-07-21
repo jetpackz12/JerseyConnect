@@ -13,7 +13,7 @@ const sidebarMenus = [
     {
         menuName: "Dashboard",
         route: route("admin.dashboard"),
-        icon: "fa-solid fa-home",
+        icon: "fa-solid fa-tachograph-digital",
     },
     {
         menuName: "Jersey Templates",
@@ -237,7 +237,7 @@ const toggleSubmenu = (menuName) => {
                         class="px-4 py-2 text-paper bg-ink hover:bg-warn hover:text-ink rounded-lg transition"
                     >
                         <font-awesome-icon icon="fa-solid fa-newspaper" />
-                        Feed
+                        Website
                     </Link>
                     <Link
                         :href="route('logout')"
