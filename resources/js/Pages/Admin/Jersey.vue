@@ -10,8 +10,8 @@ import InputLabel from "@/Components/InputLabel.vue";
 import InputError from "@/Components/InputError.vue";
 import ImageUpload from "@/Components/ImageUpload.vue";
 import { useModal } from "@/Composables/useModal";
-import { Head, useForm } from "@inertiajs/vue3";
-import { ref, computed } from "vue";
+import { Head, useForm, router } from "@inertiajs/vue3";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 
 interface JerseyTemplates {
     id: number;
@@ -29,7 +29,7 @@ interface JerseyTemplates {
 }
 
 const props = defineProps<{
-    requests?: JerseyTemplates[];
+    data?: JerseyTemplates[];
 }>();
 
 interface ImageStyle {
@@ -38,36 +38,7 @@ interface ImageStyle {
 
 type JerseyTemplatesStatus = "active" | "inactive";
 
-const jerseyTemplates = ref<JerseyTemplates[]>([
-    {
-        id: 1,
-        name: "Classic Pinstripe",
-        image: "/images/image1.png",
-        price: 249,
-        badge: "Bestseller",
-        primary_color: "#14202B",
-        secondary_color: "#FFFFFF",
-        accent_color: "#2E7D4F",
-        sport: "Basketball",
-        status: "active",
-        created_at: "2026-07-01T09:15:00Z",
-        updated_at: "2026-07-01T09:15:00Z",
-    },
-    {
-        id: 2,
-        name: "Classic Pinstripe",
-        image: "/images/image2.png",
-        price: 249,
-        badge: "Bestseller",
-        primary_color: "#14202B",
-        secondary_color: "#FFFFFF",
-        accent_color: "#2E7D4F",
-        sport: "Basketball",
-        status: "inactive",
-        created_at: "2026-07-02T09:15:00Z",
-        updated_at: "2026-07-01T09:15:00Z",
-    },
-]);
+const jerseyTemplates = computed(() => props.data ?? []);
 
 const statusBadge: Record<
     JerseyTemplatesStatus,
@@ -134,6 +105,66 @@ function formatDate(value: string) {
     });
 }
 
+/* ---------------- RATE LIMIT ---------------- */
+const showLimitModal = ref(false);
+const retryAfterSeconds = ref<number | null>(null);
+let countdownTimer: ReturnType<typeof setInterval> | null = null;
+let removeInvalidListener: (() => void) | undefined;
+
+function startCountdown(seconds: number | null) {
+    stopCountdown();
+    if (!seconds || seconds <= 0) return;
+
+    retryAfterSeconds.value = seconds;
+    countdownTimer = setInterval(() => {
+        if (retryAfterSeconds.value === null) return;
+        if (retryAfterSeconds.value <= 1) {
+            retryAfterSeconds.value = 0;
+            stopCountdown();
+            return;
+        }
+        retryAfterSeconds.value -= 1;
+    }, 1000);
+}
+
+function stopCountdown() {
+    if (countdownTimer) {
+        clearInterval(countdownTimer);
+        countdownTimer = null;
+    }
+}
+
+function closeLimitModal() {
+    showLimitModal.value = false;
+    stopCountdown();
+    retryAfterSeconds.value = null;
+}
+
+onMounted(() => {
+    removeInvalidListener = router.on("invalid", (event) => {
+        const status = event.detail.response?.status;
+
+        if (status === 429) {
+            // Stop Inertia from rendering the default error page.
+            event.preventDefault();
+
+            const retryAfterHeader =
+                event.detail.response?.headers?.["retry-after"];
+            const seconds = retryAfterHeader
+                ? Number(retryAfterHeader)
+                : null;
+
+            startCountdown(seconds);
+            showLimitModal.value = true;
+        }
+    });
+});
+
+onUnmounted(() => {
+    removeInvalidListener?.();
+    stopCountdown();
+});
+
 /* ---------------- ADD ---------------- */
 
 const addImageStyle = ref<ImageStyle>({ backgroundImage: "" });
@@ -163,7 +194,7 @@ function onAddImageChange(file: File) {
 }
 
 function submitAdd() {
-    addForm.post(route("admin.jersey-templates.store"), {
+    addForm.post(route("admin.jersey.store"), {
         forceFormData: true,
         preserveScroll: true,
         onSuccess: () => closeModal(),
@@ -231,7 +262,7 @@ function submitEdit() {
             ...data,
             _method: "put",
         }))
-        .post(route("admin.jersey-templates.update", editForm.id), {
+        .post(route("admin.jersey.update", editForm.id), {
             forceFormData: true,
             preserveScroll: true,
             onSuccess: () => closeModal(),
@@ -495,7 +526,14 @@ function submitEdit() {
                         type="submit"
                         class="flex items-center justify-center gap-1"
                         :disabled="addForm.processing"
+                        :class="{ 'opacity-25': addForm.processing }"
                     >
+                        <div class="text-sm" v-if="addForm.processing">
+                            <font-awesome-icon
+                                icon="fa-solid fa-spinner"
+                                spin
+                            />
+                        </div>
                         Save
                         <font-awesome-icon icon="fa-solid fa-circle-down" />
                     </PrimaryButton>
@@ -706,13 +744,68 @@ function submitEdit() {
                     <PrimaryButton
                         type="submit"
                         class="flex items-center justify-center gap-1"
-                        :disabled="addForm.processing"
+                        :disabled="editForm.processing"
+                        :class="{ 'opacity-25': editForm.processing }"
                     >
+                        <div class="text-sm" v-if="editForm.processing">
+                            <font-awesome-icon
+                                icon="fa-solid fa-spinner"
+                                spin
+                            />
+                        </div>
                         Save
                         <font-awesome-icon icon="fa-solid fa-circle-down" />
                     </PrimaryButton>
                 </div>
             </form>
+        </Modal>
+
+        <!-- Rate Limit Modal -->
+        <Modal :show="showLimitModal" @close="closeLimitModal()" :maxWidth="'md'">
+            <div class="px-4 pt-6 pb-5 sm:p-6 text-center">
+                <div
+                    class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-100"
+                >
+                    <font-awesome-icon
+                        icon="fa-solid fa-hourglass-half"
+                        class="text-amber-600 text-lg"
+                    />
+                </div>
+
+                <h2 class="mt-4 text-lg font-medium text-gray-900">
+                    Whoa, slow down a bit!
+                </h2>
+
+                <p class="mt-2 text-sm text-gray-600">
+                    You've made too many requests in a short time. Please
+                    wait a moment before trying again.
+                </p>
+
+                <p
+                    v-if="retryAfterSeconds !== null && retryAfterSeconds > 0"
+                    class="mt-3 text-sm font-medium text-[#14202B]"
+                >
+                    You can try again in
+                    <span class="text-amber-600">{{ retryAfterSeconds }}s</span>
+                </p>
+
+                <div class="mt-6 flex justify-center">
+                    <PrimaryButton
+                        type="button"
+                        :disabled="
+                            retryAfterSeconds !== null && retryAfterSeconds > 0
+                        "
+                        :class="{
+                            'opacity-40 cursor-not-allowed':
+                                retryAfterSeconds !== null &&
+                                retryAfterSeconds > 0,
+                        }"
+                        @click="closeLimitModal()"
+                    >
+                        Got it
+                    </PrimaryButton>
+                </div>
+            </div>
         </Modal>
     </AdminLayout>
 </template>

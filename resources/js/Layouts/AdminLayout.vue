@@ -17,7 +17,7 @@ const sidebarMenus = [
     },
     {
         menuName: "Jersey Templates",
-        route: route("admin.jersey"),
+        route: route("admin.jersey.index"),
         icon: "fa-solid fa-tshirt",
         hasBadge: true,
     },
