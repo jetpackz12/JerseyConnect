@@ -81,7 +81,7 @@ function onKeydown(e: KeyboardEvent) {
                 <div v-if="canLogin" class="hidden md:flex items-center gap-2">
                     <Link
                         v-if="$page.props.auth.user"
-                        :href="route('client.home')"
+                        :href="route('client.home.index')"
                         class="text-sm font-semibold bg-ink text-paper px-4 py-2 rounded-md hover:bg-ink/90 transition-colors"
                     >
                         Back
@@ -184,7 +184,7 @@ function onKeydown(e: KeyboardEvent) {
                     >
                         <Link
                             v-if="$page.props.auth.user"
-                            :href="route('client.home')"
+                            :href="route('client.home.index')"
                             class="text-center text-sm font-semibold bg-ink text-paper px-4 py-3 rounded-md hover:bg-ink/90 transition-colors"
                             @click="closeMobileMenu"
                         >

@@ -8,7 +8,7 @@ const isShowSideBar = ref(true);
 const page = usePage();
 
 const sidebarMenus = [
-    { menuName: "Home", route: route("client.home"), icon: "fa-solid fa-tachograph-digital" },
+    { menuName: "Home", route: route("client.home.index"), icon: "fa-solid fa-tachograph-digital" },
     {
         menuName: "My Design Requests",
         route: route("client.design.index"),
@@ -62,7 +62,7 @@ const isActive = (href: string | URL) =>
                 >
                     <Link
                         class="flex items-center gap-3 no-underline flex-shrink-0"
-                        :href="route('client.home')"
+                        :href="route('client.home.index')"
                     >
                         <span
                             class="w-8 h-8 rounded-md bg-paper text-ink font-bold flex items-center justify-center text-lg leading-none pt-0.5 font-display"
