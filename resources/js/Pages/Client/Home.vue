@@ -13,6 +13,13 @@ import { useModal } from "@/Composables/useModal";
 import { Head, useForm } from "@inertiajs/vue3";
 import { ref, computed } from "vue";
 
+// Templates come from the admin-managed catalog (only "active" ones are sent).
+const props = defineProps<{
+    data?: JerseyTemplate[];
+}>();
+
+const jerseyTemplates = computed<JerseyTemplate[]>(() => props.data ?? []);
+
 const sports = [
     "All",
     "Basketball",
@@ -23,103 +30,6 @@ const sports = [
 ] as const;
 const activeSport = ref<(typeof sports)[number]>("All");
 const search = ref("");
-
-const jerseyTemplates: JerseyTemplate[] = [
-    {
-        id: 1,
-        name: "Ironclad Stripe",
-        sport: "Basketball",
-        price: 249,
-        rating: 4.8,
-        badge: "Bestseller",
-        primaryColor: "#FFFF00",
-        secondaryColor: "#FF0000",
-        accentColor: "#FFA500",
-        imagePath: "/images/image1.png",
-    },
-    {
-        id: 2,
-        name: "Riverline Kit",
-        sport: "Soccer",
-        price: 199,
-        rating: 4.6,
-        badge: "New",
-        primaryColor: "#2E7D4F",
-        secondaryColor: "#14202B",
-        accentColor: "#FFFFFF",
-        imagePath: "/images/image2.png",
-    },
-    {
-        id: 3,
-        name: "Diamond Classic",
-        sport: "Baseball",
-        price: 279,
-        rating: 4.9,
-        primaryColor: "#2E7D4F",
-        secondaryColor: "#14202B",
-        accentColor: "#FFFFFF",
-        imagePath: "/images/image3.png",
-    },
-    {
-        id: 4,
-        name: "Spike Line",
-        sport: "Volleyball",
-        price: 219,
-        rating: 4.5,
-        badge: "Hot",
-        primaryColor: "#2E7D4F",
-        secondaryColor: "#14202B",
-        accentColor: "#FFFFFF",
-        imagePath: "/images/image4.png",
-    },
-    {
-        id: 5,
-        name: "Neon Circuit",
-        sport: "Esports",
-        price: 189,
-        rating: 4.7,
-        badge: "New",
-        primaryColor: "#2E7D4F",
-        secondaryColor: "#14202B",
-        accentColor: "#FFFFFF",
-        imagePath: "/images/image1.png",
-    },
-    {
-        id: 6,
-        name: "Court Legacy",
-        sport: "Basketball",
-        price: 259,
-        rating: 4.4,
-        primaryColor: "#2E7D4F",
-        secondaryColor: "#14202B",
-        accentColor: "#FFFFFF",
-        imagePath: "/images/image2.png",
-    },
-    {
-        id: 7,
-        name: "Pitchside Pro",
-        sport: "Soccer",
-        price: 209,
-        rating: 4.6,
-        badge: "Hot",
-        primaryColor: "#2E7D4F",
-        secondaryColor: "#14202B",
-        accentColor: "#FFFFFF",
-        imagePath: "/images/image3.png",
-    },
-    {
-        id: 8,
-        name: "Homeplate Heritage",
-        sport: "Baseball",
-        price: 299,
-        rating: 4.9,
-        badge: "Bestseller",
-        primaryColor: "#2E7D4F",
-        secondaryColor: "#14202B",
-        accentColor: "#FFFFFF",
-        imagePath: "/images/image4.png",
-    },
-];
 
 const modal = useModal();
 
@@ -136,11 +46,10 @@ const form = useForm({
     estimated_quantity: "",
     notes: "",
     logo: null as File | null,
-    reference_images: [] as File[],
 });
 
 const filtered = computed<JerseyTemplate[]>(() => {
-    return jerseyTemplates.filter((t) => {
+    return jerseyTemplates.value.filter((t) => {
         const matchesSport =
             activeSport.value === "All" || t.sport === activeSport.value;
         const matchesSearch = t.name
@@ -151,8 +60,11 @@ const filtered = computed<JerseyTemplate[]>(() => {
 });
 
 function handleSelect(id: number) {
-    const template = jerseyTemplates.find((t) => t.id === id) ?? null;
+    const template = jerseyTemplates.value.find((t) => t.id === id) ?? null;
     selectedTemplate.value = template;
+
+    form.reset();
+    form.clearErrors();
 
     form.template_id = template ? String(template.id) : "";
     form.primary_color = template?.primaryColor ?? "#2E7D4F";
@@ -172,12 +84,17 @@ function handleLogoUpload(event: Event) {
 
 const modalClose = () => {
     form.reset();
+    form.clearErrors();
     selectedTemplate.value = null;
     modal.closeModal();
 };
 
 const submit = () => {
-    console.log(form);
+    form.post(route("client.home.store"), {
+        forceFormData: true,
+        preserveScroll: true,
+        onSuccess: () => modalClose(),
+    });
 };
 </script>
 

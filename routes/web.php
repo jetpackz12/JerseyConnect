@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\JerseyController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
@@ -16,9 +17,11 @@ Route::get('/', function () {
 })->name('landing-page');
 
 Route::middleware(['auth', 'client'])->prefix('client')->name('client.')->group(function () {
-    Route::get('/home', function () {
-        return Inertia::render('Client/Home');
-    })->name('home');
+    Route::resource('home', HomeController::class)->only(['index']);
+
+    Route::middleware(['throttle:api'])->group(function () {
+        Route::resource('home', HomeController::class)->only(['store']);
+    });
 
     Route::prefix('design')->name('design.')->group(function () {
         Route::get('/', function () {
