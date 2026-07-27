@@ -201,14 +201,6 @@ const designRequestsStatus = [
         value: "waiting_for_down_payment",
         label: "Waiting for Down Payment",
     },
-    {
-        value: "pending_down_payment_review",
-        label: "Pending Down Payment Review",
-    },
-    {
-        value: "approved",
-        label: "Approved",
-    },
 ];
 
 const editImageStyle = ref<ImageStyle>({ backgroundImage: "" });
