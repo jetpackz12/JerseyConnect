@@ -8,217 +8,18 @@ import type { Order, OrderStatus, CourierReceipt } from "@/types/orders.ts";
 import { activeCouriers, getCourierById } from "@/types/couriers";
 import { formatCurrency } from "@/Composables/shipping";
 import { useModal } from "@/Composables/useModal";
-import { Head, Link } from "@inertiajs/vue3";
-import { ref, computed, reactive } from "vue";
+import { Head, Link, router, useForm, usePoll } from "@inertiajs/vue3";
+import { ref, computed } from "vue";
 
 const props = defineProps<{
     orders?: Order[];
 }>();
 
-// ---------------------------------------------------------------------------
-// Mock data — replace with props.orders once the backend endpoint is wired up
-// ---------------------------------------------------------------------------
-const mockOrders: Order[] = [
-    {
-        id: 1,
-        order_number: "ORD-2026-0001",
-        design_request_id: 4,
-        template_name: "Minimalist Crest",
-        template_image: "/images/image4.png",
-        team_name: "Arevalo Titans",
-        primary_color: "#1F618D",
-        secondary_color: "#FFFFFF",
-        accent_color: "#1F618D",
-        font_style: "Sans Condensed",
-        quantity: 12,
-        unit_price: 249,
-        address: {
-            id: 1,
-            recipient_name: "Marco Villanueva",
-            contact_number: "0917 123 4567",
-            line1: "Blk 4 Lot 12 Rizal St.",
-            barangay: "Arevalo",
-            city: "Iloilo City",
-            province: "Iloilo",
-            postal_code: "5000",
-            is_default: true,
-        },
-        shipping_fee: null,
-        status: "processing",
-        courier_receipt: null,
-        created_at: "2026-06-21T09:00:00Z",
-        updated_at: "2026-07-05T10:00:00Z",
-    },
-    {
-        id: 2,
-        order_number: "ORD-2026-0002",
-        design_request_id: 9,
-        template_name: "Vortex Fade",
-        template_image: "/images/image2.png",
-        team_name: "Cebu Coastal Runners",
-        primary_color: "#2E7D4F",
-        secondary_color: "#F5C518",
-        accent_color: "#14202B",
-        font_style: "Slab Serif",
-        quantity: 20,
-        unit_price: 249,
-        address: {
-            id: 2,
-            recipient_name: "Anna Bautista",
-            contact_number: "0918 555 2211",
-            line1: "88 Salinas Drive",
-            city: "Cebu City",
-            province: "Cebu",
-            postal_code: "6000",
-            is_default: true,
-        },
-        shipping_fee: null,
-        status: "in_production",
-        courier_receipt: null,
-        created_at: "2026-06-10T08:30:00Z",
-        updated_at: "2026-07-12T14:00:00Z",
-    },
-    {
-        id: 3,
-        order_number: "ORD-2026-0003",
-        design_request_id: 11,
-        template_name: "Retro Stripe",
-        template_image: "/images/image3.png",
-        team_name: "Manila Bay Sharks",
-        primary_color: "#C0392B",
-        secondary_color: "#FFFFFF",
-        accent_color: "#F5C518",
-        font_style: "Script",
-        quantity: 15,
-        unit_price: 249,
-        address: {
-            id: 3,
-            recipient_name: "Carlo Reyes",
-            contact_number: "0920 444 7890",
-            line1: "212 Katipunan Ave",
-            city: "Quezon City",
-            province: "Metro Manila",
-            postal_code: "1108",
-            is_default: true,
-        },
-        shipping_fee: null,
-        status: "ready_for_delivery",
-        courier_receipt: null,
-        created_at: "2026-07-15T07:00:00Z",
-        updated_at: "2026-07-15T07:00:00Z",
-    },
-    {
-        id: 4,
-        order_number: "ORD-2026-0004",
-        design_request_id: 4,
-        template_name: "Minimalist Crest",
-        template_image: "/images/image4.png",
-        team_name: "Arevalo Titans",
-        primary_color: "#1F618D",
-        secondary_color: "#FFFFFF",
-        accent_color: "#1F618D",
-        font_style: "Sans Condensed",
-        quantity: 12,
-        unit_price: 249,
-        address: {
-            id: 1,
-            recipient_name: "Marco Villanueva",
-            contact_number: "0917 123 4567",
-            line1: "Blk 4 Lot 12 Rizal St.",
-            barangay: "Arevalo",
-            city: "Iloilo City",
-            province: "Iloilo",
-            postal_code: "5000",
-            is_default: true,
-        },
-        shipping_fee: 380,
-        status: "shipped",
-        courier_receipt: {
-            id: 1,
-            courier_id: 1,
-            transaction_number: "JT-88213764521",
-            shipping_fee: 380,
-            date_shipped: "2026-07-12T14:00:00Z",
-            remarks: "3 boxes",
-        },
-        created_at: "2026-06-21T09:00:00Z",
-        updated_at: "2026-07-05T10:00:00Z",
-    },
-    {
-        id: 5,
-        order_number: "ORD-2026-0005",
-        design_request_id: 9,
-        template_name: "Vortex Fade",
-        template_image: "/images/image2.png",
-        team_name: "Cebu Coastal Runners",
-        primary_color: "#2E7D4F",
-        secondary_color: "#F5C518",
-        accent_color: "#14202B",
-        font_style: "Slab Serif",
-        quantity: 20,
-        unit_price: 249,
-        address: {
-            id: 2,
-            recipient_name: "Anna Bautista",
-            contact_number: "0918 555 2211",
-            line1: "88 Salinas Drive",
-            city: "Cebu City",
-            province: "Cebu",
-            postal_code: "6000",
-            is_default: true,
-        },
-        shipping_fee: 320,
-        status: "delivered",
-        courier_receipt: {
-            id: 1,
-            courier_id: 1,
-            transaction_number: "JT-88213764521",
-            shipping_fee: 320,
-            date_shipped: "2026-07-12T14:00:00Z",
-            remarks: "3 boxes",
-        },
-        created_at: "2026-06-10T08:30:00Z",
-        updated_at: "2026-07-12T14:00:00Z",
-    },
-    {
-        id: 6,
-        order_number: "ORD-2026-0006",
-        design_request_id: 11,
-        template_name: "Retro Stripe",
-        template_image: "/images/image3.png",
-        team_name: "Manila Bay Sharks",
-        primary_color: "#C0392B",
-        secondary_color: "#FFFFFF",
-        accent_color: "#F5C518",
-        font_style: "Script",
-        quantity: 15,
-        unit_price: 249,
-        address: {
-            id: 3,
-            recipient_name: "Carlo Reyes",
-            contact_number: "0920 444 7890",
-            line1: "212 Katipunan Ave",
-            city: "Quezon City",
-            province: "Metro Manila",
-            postal_code: "1108",
-            is_default: true,
-        },
-        shipping_fee: 380,
-        status: "completed",
-        courier_receipt: {
-            id: 1,
-            courier_id: 1,
-            transaction_number: "JT-88213764521",
-            shipping_fee: 380,
-            date_shipped: "2026-07-12T14:00:00Z",
-            remarks: "3 boxes",
-        },
-        created_at: "2026-07-15T07:00:00Z",
-        updated_at: "2026-07-15T07:00:00Z",
-    },
-];
+usePoll(5000, {
+    only: ["orders"],
+});
 
-const orders = computed<Order[]>(() => props.orders ?? mockOrders);
+const orders = computed<Order[]>(() => props.orders ?? []);
 
 // ---------------------------------------------------------------------------
 // Stats (top summary cards)
@@ -335,17 +136,11 @@ function viewOrder(order: Order) {
 }
 
 // --- Advance status / attach courier receipt ---
-const statusForm = reactive<{
-    status: OrderStatus | null;
-    courier_id: number | null;
-    transaction_number: string;
-    shipping_fee: number | null;
-    remarks: string;
-}>({
-    status: null,
-    courier_id: null,
+const statusForm = useForm({
+    status: null as OrderStatus | null,
+    courier_id: null as number | null,
     transaction_number: "",
-    shipping_fee: null,
+    shipping_fee: null as number | null,
     remarks: "",
 });
 
@@ -353,6 +148,7 @@ const needsCourierReceipt = computed(() => statusForm.status === "shipped");
 
 function openStatusModal(order: Order) {
     selectedOrder.value = order;
+    statusForm.clearErrors();
     statusForm.status = nextAllowedStatuses(order.status)[0] ?? null;
     statusForm.courier_id = order.courier_receipt?.courier_id ?? null;
     statusForm.transaction_number =
@@ -367,29 +163,10 @@ function openStatusModal(order: Order) {
 
 function submitStatusUpdate() {
     if (!selectedOrder.value || !statusForm.status) return;
-
-    // TODO: replace with a real request, e.g.
-    // router.patch(route('admin.orders.updateStatus', selectedOrder.value.id), { ...statusForm })
-    selectedOrder.value.status = statusForm.status;
-
-    if (
-        statusForm.status === "shipped" &&
-        statusForm.courier_id !== null &&
-        statusForm.shipping_fee !== null
-    ) {
-        const receipt: CourierReceipt = {
-            courier_id: statusForm.courier_id,
-            transaction_number: statusForm.transaction_number,
-            shipping_fee: statusForm.shipping_fee,
-            date_shipped: new Date().toISOString(),
-            remarks: statusForm.remarks || null,
-        };
-        selectedOrder.value.courier_receipt = receipt;
-        // The order-level shipping fee (and therefore the final total) is
-        // only known from this point on.
-        selectedOrder.value.shipping_fee = statusForm.shipping_fee;
-    }
-    closeModal();
+    statusForm.patch(
+        route("admin.orders.update-status", selectedOrder.value.id),
+        { onSuccess: () => closeModal() },
+    );
 }
 
 const isFormValid = computed(() => {
@@ -407,6 +184,7 @@ const isFormValid = computed(() => {
 
 function closeModal() {
     selectedOrder.value = null;
+    statusForm.clearErrors();
     modal.closeModal();
 }
 
@@ -674,12 +452,7 @@ function formatDate(value: string) {
                             {{ selectedOrder.quantity }}
                         </p>
                         <Link
-                            :href="
-                                route(
-                                    'admin.design',
-                                    selectedOrder.design_request_id,
-                                )
-                            "
+                            :href="route('admin.design.index')"
                             class="text-center text-xs text-blue-600 hover:underline"
                         >
                             View original design request
@@ -695,11 +468,23 @@ function formatDate(value: string) {
                                 />
                                 Delivery Address
                             </p>
-                            <p class="text-sm text-[#14202B]/80">
+                            <p
+                                class="text-sm text-[#14202B]/80"
+                                v-if="
+                                    selectedOrder.address.recipient_name &&
+                                    selectedOrder.address.contact_number
+                                "
+                            >
                                 {{ selectedOrder.address.recipient_name }} •
                                 {{ selectedOrder.address.contact_number }}
                             </p>
-                            <p class="text-sm text-[#14202B]/80">
+                            <p
+                                class="text-sm text-[#14202B]/80"
+                                v-if="
+                                    selectedOrder.address.line1 &&
+                                    selectedOrder.address.province
+                                "
+                            >
                                 {{ selectedOrder.address.line1
                                 }}<span v-if="selectedOrder.address.barangay"
                                     >,
@@ -710,7 +495,7 @@ function formatDate(value: string) {
                             </p>
                             <p class="text-xs text-[#14202B]/40 mt-1">
                                 Address is managed by the customer. Ask them to
-                                update it from their account if it's incorrect.
+                                update it from their account.
                             </p>
                         </div>
 
@@ -832,9 +617,10 @@ function formatDate(value: string) {
                             </p>
                         </div>
 
-                        <div class="flex justify-end">
+                        <div>
                             <PrimaryButton
                                 v-if="selectedOrder.status !== 'completed'"
+                                class="w-full flex items-center justify-center gap-1"
                                 @click="
                                     () => {
                                         const order = selectedOrder!;
@@ -884,16 +670,22 @@ function formatDate(value: string) {
                         {{ statusBadge[s].label }}
                     </option>
                 </select>
+                <p
+                    v-if="statusForm.errors.status"
+                    class="mt-1 text-xs text-red-600"
+                >
+                    {{ statusForm.errors.status }}
+                </p>
 
                 <div
                     v-if="needsCourierReceipt"
                     class="mt-4 border-t border-[#14202B]/10 pt-4 space-y-3"
                 >
                     <p class="text-xs text-[#14202B]/60">
-                        No courier API is connected — enter the transaction
-                        number and shipping fee from the courier's receipt.
-                        The tracking site is pulled from the Courier module,
-                        so there's nothing to paste in for that.
+                        No courier API is connected enter the transaction
+                        number and shipping fee from the courier's receipt. The
+                        tracking site is pulled from the Courier module, so
+                        there's nothing to paste in for that.
                     </p>
 
                     <div>
@@ -920,8 +712,14 @@ function formatDate(value: string) {
                             v-if="courierOptions.length === 0"
                             class="mt-1 text-xs text-red-600"
                         >
-                            No active couriers found. Add or activate one in
-                            the Couriers module first.
+                            No active couriers found. Add or activate one in the
+                            Couriers module first.
+                        </p>
+                        <p
+                            v-if="statusForm.errors.courier_id"
+                            class="mt-1 text-xs text-red-600"
+                        >
+                            {{ statusForm.errors.courier_id }}
                         </p>
                     </div>
 
@@ -936,6 +734,12 @@ function formatDate(value: string) {
                             placeholder="e.g. JT-88213764521"
                             class="w-full rounded-md border border-gray-300 text-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
+                        <p
+                            v-if="statusForm.errors.transaction_number"
+                            class="mt-1 text-xs text-red-600"
+                        >
+                            {{ statusForm.errors.transaction_number }}
+                        </p>
                     </div>
 
                     <div>
@@ -951,6 +755,12 @@ function formatDate(value: string) {
                             placeholder="e.g. 380"
                             class="w-full rounded-md border border-gray-300 text-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
+                        <p
+                            v-if="statusForm.errors.shipping_fee"
+                            class="mt-1 text-xs text-red-600"
+                        >
+                            {{ statusForm.errors.shipping_fee }}
+                        </p>
                     </div>
 
                     <div>
@@ -964,12 +774,29 @@ function formatDate(value: string) {
                             placeholder="e.g. 3 boxes"
                             class="w-full rounded-md border border-gray-300 text-sm py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
+                        <p
+                            v-if="statusForm.errors.remarks"
+                            class="mt-1 text-xs text-red-600"
+                        >
+                            {{ statusForm.errors.remarks }}
+                        </p>
                     </div>
                 </div>
 
                 <div class="mt-6 flex justify-between">
                     <SecondaryButton @click="closeModal">Close</SecondaryButton>
-                    <PrimaryButton :disabled="!isFormValid" @click="submitStatusUpdate">
+                    <PrimaryButton
+                        class="flex items-center justify-center gap-1"
+                        @click="submitStatusUpdate"
+                        :disabled="!isFormValid || statusForm.processing"
+                        :class="{ 'opacity-25': !isFormValid || statusForm.processing }"
+                    >
+                        <div class="text-sm" v-if="!isFormValid || statusForm.processing">
+                            <font-awesome-icon
+                                icon="fa-solid fa-spinner"
+                                spin
+                            />
+                        </div>
                         Save
                     </PrimaryButton>
                 </div>

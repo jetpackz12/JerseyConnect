@@ -31,7 +31,7 @@ const sidebarMenus = [
         menuName: "Order Management",
         icon: "fa-solid fa-shopping-basket",
         children: [
-            { menuName: "Orders", route: route("admin.orders") },
+            { menuName: "Orders", route: route("admin.orders.index") },
             {
                 menuName: "Couriers",
                 route: route("admin.couriers"),

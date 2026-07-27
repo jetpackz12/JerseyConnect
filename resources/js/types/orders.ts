@@ -19,7 +19,6 @@ export interface Address {
     recipient_name: string;
     contact_number: string;
     line1: string;
-    line2?: string | null;
     barangay?: string | null;
     city: string;
     province: string;

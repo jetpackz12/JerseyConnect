@@ -4,224 +4,26 @@ import Table from "@/Components/Table.vue";
 import Modal from "@/Components/Modal.vue";
 import SecondaryButton from "@/Components/SecondaryButton.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
+import InputLabel from "@/Components/InputLabel.vue";
+import TextInput from "@/Components/TextInput.vue";
+import InputError from "@/Components/InputError.vue";
 import LocationPicker from "@/Components/LocationPicker.vue";
 import type { Order, OrderStatus } from "@/types/orders.ts";
 import { getCourierById } from "@/types/couriers";
 import { formatCurrency } from "@/Composables/shipping";
 import { useModal } from "@/Composables/useModal";
-import { Head, Link } from "@inertiajs/vue3";
-import { ref, computed, reactive } from "vue";
+import { Head, Link, useForm, usePoll } from "@inertiajs/vue3";
+import { ref, computed } from "vue";
 
 const props = defineProps<{
     orders?: Order[];
-    /** Set to true on the client-facing route; hides admin-only controls */
-    readOnly?: boolean;
 }>();
 
-// ---------------------------------------------------------------------------
-// Mock data — replace with props.orders once the backend endpoint is wired up
-// ---------------------------------------------------------------------------
-const mockOrders: Order[] = [
-    {
-        id: 1,
-        order_number: "ORD-2026-0001",
-        design_request_id: 4,
-        template_name: "Minimalist Crest",
-        template_image: "/images/image4.png",
-        team_name: "Arevalo Titans",
-        primary_color: "#1F618D",
-        secondary_color: "#FFFFFF",
-        accent_color: "#1F618D",
-        font_style: "Sans Condensed",
-        quantity: 12,
-        unit_price: 249,
-        address: {
-            id: 1,
-            recipient_name: "Marco Villanueva",
-            contact_number: "0917 123 4567",
-            line1: "Blk 4 Lot 12 Rizal St.",
-            barangay: "Arevalo",
-            city: "Iloilo City",
-            province: "Iloilo",
-            postal_code: "5000",
-            is_default: true,
-        },
-        shipping_fee: null,
-        status: "processing",
-        courier_receipt: null,
-        created_at: "2026-06-21T09:00:00Z",
-        updated_at: "2026-07-05T10:00:00Z",
-    },
-    {
-        id: 2,
-        order_number: "ORD-2026-0002",
-        design_request_id: 9,
-        template_name: "Vortex Fade",
-        template_image: "/images/image2.png",
-        team_name: "Cebu Coastal Runners",
-        primary_color: "#2E7D4F",
-        secondary_color: "#F5C518",
-        accent_color: "#14202B",
-        font_style: "Slab Serif",
-        quantity: 20,
-        unit_price: 249,
-        address: {
-            id: 2,
-            recipient_name: "Anna Bautista",
-            contact_number: "0918 555 2211",
-            line1: "88 Salinas Drive",
-            city: "Cebu City",
-            province: "Cebu",
-            postal_code: "6000",
-            is_default: true,
-        },
-        shipping_fee: null,
-        status: "in_production",
-        courier_receipt: null,
-        created_at: "2026-06-10T08:30:00Z",
-        updated_at: "2026-07-12T14:00:00Z",
-    },
-    {
-        id: 3,
-        order_number: "ORD-2026-0003",
-        design_request_id: 11,
-        template_name: "Retro Stripe",
-        template_image: "/images/image3.png",
-        team_name: "Manila Bay Sharks",
-        primary_color: "#C0392B",
-        secondary_color: "#FFFFFF",
-        accent_color: "#F5C518",
-        font_style: "Script",
-        quantity: 15,
-        unit_price: 249,
-        address: {
-            id: 3,
-            recipient_name: "Carlo Reyes",
-            contact_number: "0920 444 7890",
-            line1: "212 Katipunan Ave",
-            city: "Quezon City",
-            province: "Metro Manila",
-            postal_code: "1108",
-            is_default: true,
-        },
-        shipping_fee: null,
-        status: "ready_for_delivery",
-        courier_receipt: null,
-        created_at: "2026-06-05T07:00:00Z",
-        updated_at: "2026-07-02T16:00:00Z",
-    },
-    {
-        id: 4,
-        order_number: "ORD-2026-0004",
-        design_request_id: 4,
-        template_name: "Minimalist Crest",
-        template_image: "/images/image4.png",
-        team_name: "Arevalo Titans",
-        primary_color: "#1F618D",
-        secondary_color: "#FFFFFF",
-        accent_color: "#1F618D",
-        font_style: "Sans Condensed",
-        quantity: 12,
-        unit_price: 249,
-        address: {
-            id: 1,
-            recipient_name: "Marco Villanueva",
-            contact_number: "0917 123 4567",
-            line1: "Blk 4 Lot 12 Rizal St.",
-            barangay: "Arevalo",
-            city: "Iloilo City",
-            province: "Iloilo",
-            postal_code: "5000",
-            is_default: true,
-        },
-        shipping_fee: 380,
-        status: "shipped",
-        courier_receipt: {
-            id: 1,
-            courier_id: 1,
-            transaction_number: "JT-88213764521",
-            shipping_fee: 380,
-            date_shipped: "2026-07-12T14:00:00Z",
-            remarks: "3 boxes",
-        },
-        created_at: "2026-06-21T09:00:00Z",
-        updated_at: "2026-07-05T10:00:00Z",
-    },
-    {
-        id: 5,
-        order_number: "ORD-2026-0005",
-        design_request_id: 9,
-        template_name: "Vortex Fade",
-        template_image: "/images/image2.png",
-        team_name: "Cebu Coastal Runners",
-        primary_color: "#2E7D4F",
-        secondary_color: "#F5C518",
-        accent_color: "#14202B",
-        font_style: "Slab Serif",
-        quantity: 20,
-        unit_price: 249,
-        address: {
-            id: 2,
-            recipient_name: "Anna Bautista",
-            contact_number: "0918 555 2211",
-            line1: "88 Salinas Drive",
-            city: "Cebu City",
-            province: "Cebu",
-            postal_code: "6000",
-            is_default: true,
-        },
-        shipping_fee: 320,
-        status: "delivered",
-        courier_receipt: {
-            id: 1,
-            courier_id: 1,
-            transaction_number: "JT-88213764521",
-            shipping_fee: 320,
-            date_shipped: "2026-07-12T14:00:00Z",
-            remarks: "3 boxes",
-        },
-        created_at: "2026-06-10T08:30:00Z",
-        updated_at: "2026-07-12T14:00:00Z",
-    },
-    {
-        id: 6,
-        order_number: "ORD-2026-0006",
-        design_request_id: 11,
-        template_name: "Retro Stripe",
-        template_image: "/images/image3.png",
-        team_name: "Manila Bay Sharks",
-        primary_color: "#C0392B",
-        secondary_color: "#FFFFFF",
-        accent_color: "#F5C518",
-        font_style: "Script",
-        quantity: 15,
-        unit_price: 249,
-        address: {
-            id: 3,
-            recipient_name: "Carlo Reyes",
-            contact_number: "0920 444 7890",
-            line1: "212 Katipunan Ave",
-            city: "Quezon City",
-            province: "Metro Manila",
-            postal_code: "1108",
-            is_default: true,
-        },
-        shipping_fee: 350,
-        status: "completed",
-        courier_receipt: {
-            id: 2,
-            courier_id: 2,
-            transaction_number: "LBC-100294837",
-            shipping_fee: 350,
-            date_shipped: "2026-06-25T09:00:00Z",
-            remarks: null,
-        },
-        created_at: "2026-06-05T07:00:00Z",
-        updated_at: "2026-07-02T16:00:00Z",
-    },
-];
+usePoll(5000, {
+    only: ["orders"],
+});
 
-const orders = computed<Order[]>(() => props.orders ?? mockOrders);
+const orders = computed<Order[]>(() => props.orders ?? []);
 
 // ---------------------------------------------------------------------------
 // Status filters + badges
@@ -297,11 +99,10 @@ function viewOrder(order: Order) {
 }
 
 // --- Address management ---
-const addressForm = reactive({
+const addressForm = useForm({
     recipient_name: "",
     contact_number: "",
     line1: "",
-    line2: "",
     barangay: "",
     city: "",
     province: "",
@@ -317,13 +118,16 @@ function handleLocationUpdate(lat: number, lng: number) {
 
 function openAddressModal(order: Order) {
     selectedOrder.value = order;
-    Object.assign(addressForm, {
-        ...order.address,
-        line2: order.address.line2 ?? "",
-        barangay: order.address.barangay ?? "",
-        latitude: order.address.latitude ?? null,
-        longitude: order.address.longitude ?? null,
-    });
+    addressForm.clearErrors();
+    addressForm.recipient_name = order.address.recipient_name ?? "";
+    addressForm.contact_number = order.address.contact_number ?? "";
+    addressForm.line1 = order.address.line1 ?? "";
+    addressForm.barangay = order.address.barangay ?? "";
+    addressForm.city = order.address.city ?? "";
+    addressForm.province = order.address.province ?? "";
+    addressForm.postal_code = order.address.postal_code ?? "";
+    addressForm.latitude = order.address.latitude ?? null;
+    addressForm.longitude = order.address.longitude ?? null;
     modal.title.value = "Delivery Address";
     modal.type.value = "Address";
     modal.icon.value = "fa-solid fa-location-dot";
@@ -332,21 +136,15 @@ function openAddressModal(order: Order) {
 
 function submitAddressUpdate() {
     if (!selectedOrder.value) return;
-    // TODO: replace with a real request, e.g.
-    // router.patch(route('client.orders.updateAddress', selectedOrder.value.id), addressForm)
-    selectedOrder.value.address = {
-        ...selectedOrder.value.address,
-        ...addressForm,
-        line2: addressForm.line2 || null,
-        barangay: addressForm.barangay || null,
-        latitude: addressForm.latitude,
-        longitude: addressForm.longitude,
-    };
-    closeModal();
+    addressForm.patch(
+        route("client.orders.update-address", selectedOrder.value.id),
+        { onSuccess: () => closeModal() },
+    );
 }
 
 function closeModal() {
     selectedOrder.value = null;
+    addressForm.clearErrors();
     modal.closeModal();
 }
 
@@ -747,85 +545,99 @@ function formatDate(value: string) {
                 </h2>
                 <hr class="my-3" />
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div class="sm:col-span-2">
-                        <label
-                            class="block text-sm font-medium text-[#14202B] mb-1"
-                            >Recipient Name</label
-                        >
-                        <input
+                <div class="flex flex-col gap-3">
+                    <div>
+                        <InputLabel for="recipient_name" value="Recipient Name" />
+                        <TextInput
                             v-model="addressForm.recipient_name"
-                            type="text"
-                            class="w-full rounded-md border border-gray-300 text-sm py-2 px-3"
+                            class="mt-1 block w-full"
+                            id="recipient_name"
+                            required
+                        />
+                        <InputError
+                            :message="addressForm.errors.recipient_name"
+                            class="mt-2"
                         />
                     </div>
                     <div>
-                        <label
-                            class="block text-sm font-medium text-[#14202B] mb-1"
-                            >Contact Number</label
-                        >
-                        <input
+                        <InputLabel for="contact_number" value="Contact Number" />
+                        <TextInput
                             v-model="addressForm.contact_number"
-                            type="text"
-                            class="w-full rounded-md border border-gray-300 text-sm py-2 px-3"
+                            class="mt-1 block w-full"
+                            id="contact_number"
+                            required
+                        />
+                        <InputError
+                            :message="addressForm.errors.contact_number"
+                            class="mt-2"
                         />
                     </div>
                     <div>
-                        <label
-                            class="block text-sm font-medium text-[#14202B] mb-1"
-                            >Postal Code</label
-                        >
-                        <input
+                        <InputLabel for="postal_code" value="Postal Code" />
+                        <TextInput
                             v-model="addressForm.postal_code"
-                            type="text"
-                            class="w-full rounded-md border border-gray-300 text-sm py-2 px-3"
+                            class="mt-1 block w-full"
+                            id="postal_code"
+                            required
+                        />
+                        <InputError
+                            :message="addressForm.errors.postal_code"
+                            class="mt-2"
                         />
                     </div>
-                    <div class="sm:col-span-2">
-                        <label
-                            class="block text-sm font-medium text-[#14202B] mb-1"
-                            >Address Line 1</label
-                        >
-                        <input
+                    <div>
+                        <InputLabel for="line1" value="Address Line 1" />
+                        <TextInput
                             v-model="addressForm.line1"
-                            type="text"
-                            class="w-full rounded-md border border-gray-300 text-sm py-2 px-3"
+                            class="mt-1 block w-full"
+                            id="line1"
+                            required
+                        />
+                        <InputError
+                            :message="addressForm.errors.line1"
+                            class="mt-2"
                         />
                     </div>
-                    <div class="sm:col-span-2">
-                        <label
-                            class="block text-sm font-medium text-[#14202B] mb-1"
-                            >Barangay (optional)</label
-                        >
-                        <input
+                    <div>
+                        <InputLabel for="barangay" value="Barangay (optional)" />
+                        <TextInput
                             v-model="addressForm.barangay"
-                            type="text"
-                            class="w-full rounded-md border border-gray-300 text-sm py-2 px-3"
+                            class="mt-1 block w-full"
+                            id="barangay"
+                            required
+                        />
+                        <InputError
+                            :message="addressForm.errors.barangay"
+                            class="mt-2"
                         />
                     </div>
-                    <div class="sm:col-span-2">
-                        <label
-                            class="block text-sm font-medium text-[#14202B] mb-1"
-                            >City / Municipality</label
-                        >
-                        <input
+                    <div>
+                        <InputLabel for="city" value="City / Municipality" />
+                        <TextInput
                             v-model="addressForm.city"
-                            type="text"
-                            class="w-full rounded-md border border-gray-300 text-sm py-2 px-3"
+                            class="mt-1 block w-full"
+                            id="city"
+                            required
+                        />
+                        <InputError
+                            :message="addressForm.errors.city"
+                            class="mt-2"
                         />
                     </div>
-                    <div class="sm:col-span-2">
-                        <label
-                            class="block text-sm font-medium text-[#14202B] mb-1"
-                            >Province</label
-                        >
-                        <input
+                    <div>
+                        <InputLabel for="province" value="Province" />
+                        <TextInput
                             v-model="addressForm.province"
-                            type="text"
-                            class="w-full rounded-md border border-gray-300 text-sm py-2 px-3"
+                            class="mt-1 block w-full"
+                            id="province"
+                            required
+                        />
+                        <InputError
+                            :message="addressForm.errors.province"
+                            class="mt-2"
                         />
                     </div>
-                    <div class="sm:col-span-2">
+                    <div>
                         <label
                             class="block text-sm font-medium text-[#14202B] mb-1"
                             >Pin Location</label
@@ -852,9 +664,20 @@ function formatDate(value: string) {
 
                 <div class="mt-6 flex justify-between">
                     <SecondaryButton @click="closeModal">Close</SecondaryButton>
-                    <PrimaryButton @click="submitAddressUpdate"
-                        >Save Address</PrimaryButton
+                    <PrimaryButton
+                        class="flex items-center justify-center gap-1"
+                        :disabled="addressForm.processing"
+                        @click="submitAddressUpdate"
+                        :class="{ 'opacity-25': addressForm.processing }"
                     >
+                        <div class="text-sm" v-if="addressForm.processing">
+                            <font-awesome-icon
+                                icon="fa-solid fa-spinner"
+                                spin
+                            />
+                        </div>
+                        Save Address
+                    </PrimaryButton>
                 </div>
             </div>
         </Modal>
