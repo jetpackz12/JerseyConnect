@@ -23,7 +23,7 @@ const sidebarMenus = [
     },
     {
         menuName: "Design Requests",
-        route: route("admin.design"),
+        route: route("admin.design.index"),
         icon: "fa-solid fa-spray-can-sparkles",
         hasBadge: true,
     },

@@ -12,129 +12,18 @@ import InputError from "@/Components/InputError.vue";
 import ImageUpload from "@/Components/ImageUpload.vue";
 import type { DesignRequest, DesignRequestStatus } from "@/types/jersey";
 import { useModal } from "@/Composables/useModal";
-import { Head, Link, useForm } from "@inertiajs/vue3";
+import { Head, Link, useForm, router, usePoll } from "@inertiajs/vue3";
 import { ref, computed } from "vue";
 
 const props = defineProps<{
-    requests?: DesignRequest[];
+    data?: DesignRequest[];
 }>();
 
-const mockDesignRequests: DesignRequest[] = [
-    {
-        id: 1,
-        template_id: 1,
-        template_name: "Classic Pinstripe",
-        template_image: "/images/image1.png",
-        template_price: 249,
-        team_name: "Iloilo Sharks",
-        primary_color: "#14202B",
-        secondary_color: "#FFFFFF",
-        accent_color: "#2E7D4F",
-        estimated_quantity: 25,
-        status: "pending_review",
-        font_style: "Bold Block",
-        notes: "Would like the team name arched across the chest.",
-        created_at: "2026-07-01T09:15:00Z",
-    },
-    {
-        id: 2,
-        template_id: 1,
-        template_name: "Vortex Fade",
-        template_image: "/images/image2.png",
-        template_price: 249,
-        team_name: "Molo Warriors",
-        primary_color: "#2E7D4F",
-        secondary_color: "#F5C518",
-        accent_color: "#14202B",
-        estimated_quantity: 18,
-        status: "in_discussion",
-        font_style: "Slab Serif",
-        notes: null,
-        created_at: "2026-07-03T13:40:00Z",
-    },
-    {
-        id: 3,
-        template_id: 1,
-        template_name: "Retro Stripe",
-        template_image: "/images/image3.png",
-        template_price: 249,
-        team_name: "Jaro Falcons",
-        primary_color: "#C0392B",
-        secondary_color: "#FFFFFF",
-        accent_color: "#F5C518",
-        estimated_quantity: 30,
-        status: "revision_requested",
-        font_style: "Script",
-        notes: "Sponsor logo needs to move to the back, below the number.",
-        created_at: "2026-06-28T07:05:00Z",
-    },
-    {
-        id: 4,
-        template_id: 1,
-        template_name: "Minimalist Crest",
-        template_image: "/images/image4.png",
-        template_price: 249,
-        team_name: "Arevalo Titans",
-        primary_color: "#1F618D",
-        secondary_color: "#FFFFFF",
-        accent_color: "#1F618D",
-        estimated_quantity: 12,
-        status: "approved",
-        font_style: "Sans Condensed",
-        notes: null,
-        created_at: "2026-06-20T11:22:00Z",
-    },
-    {
-        id: 5,
-        template_id: 1,
-        template_name: "Camo Edge",
-        template_image: "/images/image1.png",
-        template_price: 249,
-        team_name: "Mandurriao Marines",
-        primary_color: "#34495E",
-        secondary_color: "#7F8C8D",
-        accent_color: "#F5C518",
-        estimated_quantity: 40,
-        status: "pending_review",
-        font_style: "Military Stencil",
-        notes: null,
-        created_at: "2026-07-10T08:30:00Z",
-    },
-    {
-        id: 6,
-        template_id: 1,
-        template_name: "Camo Edge",
-        template_image: "/images/image1.png",
-        template_price: 249,
-        team_name: "Mandurriao Marines",
-        primary_color: "#34495E",
-        secondary_color: "#7F8C8D",
-        accent_color: "#F5C518",
-        estimated_quantity: 40,
-        status: "waiting_for_down_payment",
-        font_style: "Military Stencil",
-        notes: null,
-        created_at: "2026-07-10T08:30:00Z",
-    },
-    {
-        id: 7,
-        template_id: 1,
-        template_name: "Minimalist Crest",
-        template_image: "/images/image4.png",
-        template_price: 249,
-        team_name: "Arevalo Titans",
-        primary_color: "#1F618D",
-        secondary_color: "#FFFFFF",
-        accent_color: "#1F618D",
-        estimated_quantity: 12,
-        status: "pending_down_payment_review",
-        font_style: "Sans Condensed",
-        notes: null,
-        created_at: "2026-06-20T11:22:00Z",
-    },
-];
+usePoll(5000, {
+    only: ["data"],
+});
 
-const requests = props.requests ?? mockDesignRequests;
+const requests = computed(() => props.data ?? []);
 
 const statusFilters: { label: string; value: DesignRequestStatus | "All" }[] = [
     { label: "All", value: "All" },
@@ -147,6 +36,7 @@ const statusFilters: { label: string; value: DesignRequestStatus | "All" }[] = [
         value: "pending_down_payment_review",
     },
     { label: "Approved", value: "approved" },
+    { label: "Cancelled", value: "cancelled" },
 ];
 
 const activeStatus = ref<DesignRequestStatus | "All">("All");
@@ -176,6 +66,7 @@ const statusBadge: Record<
         class: "bg-red-100 text-red-700",
     },
     approved: { label: "Approved", class: "bg-green-100 text-green-700" },
+    cancelled: { label: "Cancelled", class: "bg-gray-200 text-gray-600" },
 };
 
 const columns = [
@@ -190,8 +81,8 @@ const columns = [
 ];
 
 const filteredByStatus = computed<DesignRequest[]>(() => {
-    if (activeStatus.value === "All") return requests;
-    return requests.filter((r) => r.status === activeStatus.value);
+    if (activeStatus.value === "All") return requests.value;
+    return requests.value.filter((r) => r.status === activeStatus.value);
 });
 
 const modal = useModal();
@@ -213,6 +104,21 @@ function cancelRequest(request: DesignRequest) {
     modal.openModal();
 }
 
+const cancelling = ref(false);
+
+function confirmCancel() {
+    if (!selectedRequest.value) return;
+
+    cancelling.value = true;
+    router.delete(route("admin.design.cancel", selectedRequest.value.id), {
+        preserveScroll: true,
+        onFinish: () => {
+            cancelling.value = false;
+            closeModal();
+        },
+    });
+}
+
 function closeModal() {
     selectedRequest.value = null;
     modal.closeModal();
@@ -226,26 +132,50 @@ function formatDate(value: string) {
     });
 }
 
-// --- Payment modal state ---
-const paymentPreview = ref<string | null>(null);
-
-const paymentForm = useForm({
-    request_id: null as number | null,
-    gcash_number: "",
-    reference_number: "",
-    proof_image: null as File | null,
-});
+// --- Payment review modal state ---
+const paymentActionProcessing = ref(false);
 
 function viewPayment(request: DesignRequest) {
     selectedRequest.value = request;
-    paymentForm.reset();
-    paymentForm.request_id = request.id;
-    paymentPreview.value = null;
 
-    modal.title.value = "View Payment";
+    modal.title.value = "Review Payment";
     modal.type.value = "Payment";
     modal.icon.value = "fa-solid fa-money-bill-wave";
     modal.openModal();
+}
+
+function approvePayment() {
+    if (!selectedRequest.value) return;
+
+    paymentActionProcessing.value = true;
+    router.post(
+        route("admin.design.approve-payment", selectedRequest.value.id),
+        {},
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                paymentActionProcessing.value = false;
+                closeModal();
+            },
+        },
+    );
+}
+
+function rejectPayment() {
+    if (!selectedRequest.value) return;
+
+    paymentActionProcessing.value = true;
+    router.post(
+        route("admin.design.reject-payment", selectedRequest.value.id),
+        {},
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                paymentActionProcessing.value = false;
+                closeModal();
+            },
+        },
+    );
 }
 
 /* ---------------- EDIT ---------------- */
@@ -306,7 +236,9 @@ function editRequest(row: DesignRequest) {
     editForm.accent_color = row.accent_color;
     editForm.status = row.status;
 
-    editImageStyle.value = { backgroundImage: `url(${row.template_image})` };
+    editImageStyle.value = {
+        backgroundImage: `url(${row.template_image_url})`,
+    };
 
     modal.title.value = "Edit Design Request";
     modal.type.value = "Edit";
@@ -321,16 +253,16 @@ function onEditImageChange(file: File) {
 function submitEdit() {
     if (!editForm.id) return;
 
-    // editForm
-    //     .transform((data) => ({
-    //         ...data,
-    //         _method: "put",
-    //     }))
-    //     .post(route("admin.jersey-templates.update", editForm.id), {
-    //         forceFormData: true,
-    //         preserveScroll: true,
-    //         onSuccess: () => closeModal(),
-    //     });
+    editForm
+        .transform((data) => ({
+            ...data,
+            _method: "put",
+        }))
+        .post(route("admin.design.update", editForm.id), {
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: () => closeModal(),
+        });
 }
 </script>
 
@@ -373,7 +305,7 @@ function submitEdit() {
                 <template #template="{ row }">
                     <div class="flex items-center gap-2 text-left">
                         <img
-                            :src="row.template_image"
+                            :src="row.template_image_url"
                             :alt="row.template_name"
                             class="h-8 w-8 flex-shrink-0 rounded object-contain bg-[#14202B]/5 p-1"
                         />
@@ -435,6 +367,12 @@ function submitEdit() {
                             View
                         </button>
                         <button
+                            v-if="
+                                row.status !== 'approved' &&
+                                row.status !== 'cancelled' &&
+                                row.status !== 'waiting_for_down_payment' &&
+                                row.status !== 'pending_down_payment_review'
+                            "
                             type="button"
                             class="text-xs font-medium bg-gray-600 text-white rounded-md px-2 py-2 transition-colors hover:bg-gray-500"
                             @click="editRequest(row)"
@@ -454,7 +392,10 @@ function submitEdit() {
                             Check Payment
                         </button>
                         <Link
-                            v-if="row.status !== 'approved'"
+                            v-if="
+                                row.status !== 'approved' &&
+                                row.status !== 'cancelled'
+                            "
                             class="text-xs font-medium bg-orange-600 text-white rounded-md px-2 py-2 transition-colors hover:bg-orange-500"
                             :href="route('admin.messages')"
                         >
@@ -464,6 +405,7 @@ function submitEdit() {
                         <button
                             v-if="
                                 row.status !== 'approved' &&
+                                row.status !== 'cancelled' &&
                                 row.status !== 'revision_requested' &&
                                 row.status !== 'waiting_for_down_payment' &&
                                 row.status !== 'pending_down_payment_review'
@@ -519,10 +461,18 @@ function submitEdit() {
                                 class="flex aspect-square w-full items-center justify-center overflow-hidden rounded-lg border border-[#14202B]/10 bg-[#14202B]/5"
                             >
                                 <img
-                                    :src="selectedRequest.template_image"
+                                    v-if="
+                                        selectedRequest.original_template_image
+                                    "
+                                    :src="
+                                        selectedRequest.original_template_image
+                                    "
                                     :alt="selectedRequest.template_name"
                                     class="h-full w-full object-contain p-4"
                                 />
+                                <span v-else class="text-sm text-[#14202B]/40">
+                                    Original template no longer available.
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -538,7 +488,7 @@ function submitEdit() {
                                 class="flex aspect-square w-full items-center justify-center overflow-hidden rounded-lg border border-[#14202B]/10 bg-[#14202B]/5"
                             >
                                 <img
-                                    :src="selectedRequest.template_image"
+                                    :src="selectedRequest.template_image_url"
                                     :alt="selectedRequest.template_name"
                                     class="h-full w-full object-contain p-4"
                                 />
@@ -694,8 +644,15 @@ function submitEdit() {
                     <PrimaryButton
                         type="submit"
                         class="flex items-center justify-center gap-1"
-                        :disabled="editForm.processing"
+                        :disabled="cancelling"
+                        :class="{ 'opacity-25': editForm.processing }"
                     >
+                        <div class="text-sm" v-if="editForm.processing">
+                            <font-awesome-icon
+                                icon="fa-solid fa-spinner"
+                                spin
+                            />
+                        </div>
                         Save
                         <font-awesome-icon icon="fa-solid fa-circle-down" />
                     </PrimaryButton>
@@ -723,6 +680,7 @@ function submitEdit() {
                 <div class="mt-6 flex justify-between">
                     <SecondaryButton
                         class="flex items-center"
+                        :disabled="cancelling"
                         @click="closeModal()"
                     >
                         Close
@@ -730,8 +688,16 @@ function submitEdit() {
 
                     <DangerButton
                         class="flex items-center gap-1"
-                        @click="closeModal()"
+                        :disabled="cancelling"
+                        @click="confirmCancel()"
+                        :class="{ 'opacity-25': cancelling }"
                     >
+                        <div class="text-sm" v-if="cancelling">
+                            <font-awesome-icon
+                                icon="fa-solid fa-spinner"
+                                spin
+                            />
+                        </div>
                         Confirm
                         <font-awesome-icon icon="fa-solid fa-thumbs-up" />
                     </DangerButton>
@@ -744,7 +710,10 @@ function submitEdit() {
             @close="closeModal"
             :maxWidth="'md'"
         >
-            <div class="overflow-y-auto px-4 pt-5 pb-4 sm:p-6">
+            <div
+                class="overflow-y-auto px-4 pt-5 pb-4 sm:p-6"
+                v-if="selectedRequest"
+            >
                 <div class="flex items-center justify-between gap-2">
                     <h2 class="text-base sm:text-lg font-medium text-gray-900">
                         <font-awesome-icon :icon="modal.icon.value" />
@@ -760,10 +729,10 @@ function submitEdit() {
                     <!-- GCash number -->
                     <div class="flex items-center justify-between">
                         <span class="text-sm font-medium text-ink">
-                            Your GCash Number:
+                            Customer's GCash Number:
                         </span>
                         <p class="text-md font-medium text-ink italic">
-                            09171234567
+                            {{ selectedRequest.gcash_number ?? "—" }}
                         </p>
                     </div>
 
@@ -773,7 +742,7 @@ function submitEdit() {
                             Transaction Reference Number:
                         </span>
                         <p class="text-md font-medium text-ink italic">
-                            1234567890123
+                            {{ selectedRequest.reference_number ?? "—" }}
                         </p>
                     </div>
 
@@ -789,11 +758,36 @@ function submitEdit() {
                             class="flex aspect-square w-full items-center justify-center overflow-hidden rounded-lg border border-[#14202B]/10 bg-ink/5"
                         >
                             <img
-                                src="/images/gcash.jpg"
-                                alt="Gcash proof"
+                                v-if="selectedRequest.proof_image_url"
+                                :src="selectedRequest.proof_image_url"
+                                alt="Payment proof"
                                 class="h-full w-full object-contain p-4"
                             />
+                            <span v-else class="text-sm text-[#14202B]/40">
+                                No screenshot uploaded.
+                            </span>
                         </div>
+                    </div>
+
+                    <div class="mt-2 flex justify-between gap-2">
+                        <DangerButton
+                            class="flex flex-1 items-center justify-center gap-1"
+                            :disabled="paymentActionProcessing"
+                            @click="rejectPayment()"
+                            :class="{ 'opacity-25': paymentActionProcessing }"
+                        >
+                            Reject
+                            <font-awesome-icon icon="fa-solid fa-xmark" />
+                        </DangerButton>
+                        <PrimaryButton
+                            class="flex flex-1 items-center justify-center gap-1"
+                            :disabled="paymentActionProcessing"
+                            @click="approvePayment()"
+                            :class="{ 'opacity-25': paymentActionProcessing }"
+                        >
+                            Approve
+                            <font-awesome-icon icon="fa-solid fa-check" />
+                        </PrimaryButton>
                     </div>
                 </div>
             </div>

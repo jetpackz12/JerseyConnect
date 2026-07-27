@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\AdminDesignRequestController;
+use App\Http\Controllers\DesignRequestController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\JerseyController;
 use App\Http\Controllers\ProfileController;
@@ -18,15 +20,14 @@ Route::get('/', function () {
 
 Route::middleware(['auth', 'client'])->prefix('client')->name('client.')->group(function () {
     Route::resource('home', HomeController::class)->only(['index']);
+    Route::resource('design', DesignRequestController::class)->only(['index']);
 
     Route::middleware(['throttle:api'])->group(function () {
         Route::resource('home', HomeController::class)->only(['store']);
-    });
 
-    Route::prefix('design')->name('design.')->group(function () {
-        Route::get('/', function () {
-            return Inertia::render('Client/Design');
-        })->name('index');
+        // Client Design Requests
+        Route::post('/design/{designRequest}/pay', [DesignRequestController::class, 'pay'])->name('design.pay');
+        Route::delete('/design/{designRequest}/cancel', [DesignRequestController::class, 'cancel'])->name('design.cancel');
     });
 
     Route::prefix('orders')->name('orders.')->group(function () {
@@ -52,14 +53,17 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     })->name('dashboard');
 
     Route::resource('jersey', JerseyController::class)->only(['index']);
+    Route::resource('design', AdminDesignRequestController::class)->only(['index']);
 
     Route::middleware(['throttle:api'])->group(function () {
         Route::resource('jersey', JerseyController::class)->only(['store', 'update', 'destroy']);
-    });
 
-    Route::get('/design', function () {
-        return Inertia::render('Admin/Design');
-    })->name('design');
+        // Admin Design Requests
+        Route::put('/design/{designRequest}', [AdminDesignRequestController::class, 'update'])->name('design.update');
+        Route::delete('/design/{designRequest}', [AdminDesignRequestController::class, 'destroy'])->name('design.cancel');
+        Route::post('/design/{designRequest}/approve-payment', [AdminDesignRequestController::class, 'approvePayment'])->name('design.approve-payment');
+        Route::post('/design/{designRequest}/reject-payment', [AdminDesignRequestController::class, 'rejectPayment'])->name('design.reject-payment');
+    });
 
     Route::get('/orders', function () {
         return Inertia::render('Admin/Orders');
