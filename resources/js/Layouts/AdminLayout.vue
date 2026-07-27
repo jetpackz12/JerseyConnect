@@ -34,7 +34,7 @@ const sidebarMenus = [
             { menuName: "Orders", route: route("admin.orders.index") },
             {
                 menuName: "Couriers",
-                route: route("admin.couriers"),
+                route: route("admin.couriers.index"),
             },
         ],
     },

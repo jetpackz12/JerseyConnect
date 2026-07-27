@@ -2,12 +2,12 @@
 
 use App\Http\Controllers\AdminDesignRequestController;
 use App\Http\Controllers\AdminOrderController;
+use App\Http\Controllers\CourierController;
 use App\Http\Controllers\DesignRequestController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\JerseyController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProfileController;
-use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -15,8 +15,6 @@ Route::get('/', function () {
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
     ]);
 })->name('landing-page');
 
@@ -55,6 +53,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::resource('jersey', JerseyController::class)->only(['index']);
     Route::resource('design', AdminDesignRequestController::class)->only(['index']);
     Route::resource('orders', AdminOrderController::class)->only(['index']);
+    Route::resource('couriers', CourierController::class)->only(['index']);
 
     Route::middleware(['throttle:api'])->group(function () {
         Route::resource('jersey', JerseyController::class)->only(['store', 'update', 'destroy']);
@@ -67,15 +66,13 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
         // Admin Orders
         Route::patch('/orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.update-status');
+
+        Route::resource('couriers', CourierController::class)->only(['store', 'update', 'destroy']);
     });
 
     Route::get('/sales', function () {
         return Inertia::render('Admin/Sales');
     })->name('sales');
-
-    Route::get('/couriers', function () {
-        return Inertia::render('Admin/Couriers');
-    })->name('couriers');
 
     Route::get('/shipping', function () {
         return Inertia::render('Admin/Shipping');
@@ -96,12 +93,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('profile', function () {
         return Inertia::render('Admin/Profile');
     })->name('profile');
-});
-
-Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
 require __DIR__ . '/auth.php';

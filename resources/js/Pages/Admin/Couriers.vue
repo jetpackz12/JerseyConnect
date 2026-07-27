@@ -13,39 +13,20 @@ import { useModal } from "@/Composables/useModal";
 import { Head, useForm } from "@inertiajs/vue3";
 import { ref } from "vue";
 
+type CourierStatus = "active" | "inactive";
+
 interface Courier {
     id: number;
     name: string;
-    site: string;
-    status: "active" | "inactive";
+    site: string | null;
+    status: CourierStatus;
     created_at: string;
     updated_at: string;
 }
 
 const props = defineProps<{
-    requests?: Courier[];
+    couriers: Courier[];
 }>();
-
-type CourierStatus = "active" | "inactive";
-
-const courierTemplates = ref<Courier[]>([
-    {
-        id: 1,
-        name: "JT Express",
-        site: "https://www.jtexpress.ph/track-and-trace?waybillNo=&flag=1",
-        status: "active",
-        created_at: "2026-07-01T09:15:00Z",
-        updated_at: "2026-07-01T09:15:00Z",
-    },
-    {
-        id: 2,
-        name: "Flash Express",
-        site: "https://www.flashexpress.ph/fle/tracking",
-        status: "active",
-        created_at: "2026-07-01T09:15:00Z",
-        updated_at: "2026-07-01T09:15:00Z",
-    },
-]);
 
 const courierStatus: Record<CourierStatus, { label: string; class: string }> = {
     active: {
@@ -58,23 +39,17 @@ const courierStatus: Record<CourierStatus, { label: string; class: string }> = {
     },
 };
 
+const statusOptions = [
+    { value: "active", label: "Active" },
+    { value: "inactive", label: "Inactive" },
+];
+
 const columns = [
     { key: "name", label: "Courier" },
     { key: "site", label: "Site", slot: "site" },
     { key: "status", label: "Status", slot: "status" },
     { key: "created_at", label: "Created", slot: "date" },
     { key: "actions", label: "Action", slot: "actions" },
-];
-
-const statusOptions = [
-    {
-        value: "active",
-        label: "Active",
-    },
-    {
-        value: "inactive",
-        label: "Inactive",
-    },
 ];
 
 const modal = useModal();
@@ -85,6 +60,7 @@ function closeModal() {
     addForm.clearErrors();
     editForm.reset();
     editForm.clearErrors();
+    courierToDelete.value = null;
 }
 
 function formatDate(value: string) {
@@ -112,13 +88,10 @@ function openAddModal() {
 }
 
 function submitAdd() {
-    console.log(addForm);
-
-    // addForm.post(route("admin.jersey-templates.store"), {
-    //     forceFormData: true,
-    //     preserveScroll: true,
-    //     onSuccess: () => closeModal(),
-    // });
+    addForm.post(route("admin.couriers.store"), {
+        preserveScroll: true,
+        onSuccess: () => closeModal(),
+    });
 }
 
 /* ---------------- EDIT ---------------- */
@@ -136,7 +109,7 @@ function openEditModal(row: Courier) {
 
     editForm.id = row.id;
     editForm.name = row.name;
-    editForm.site = row.site;
+    editForm.site = row.site ?? "";
     editForm.status = row.status;
 
     modal.title.value = "Edit Courier";
@@ -147,18 +120,40 @@ function openEditModal(row: Courier) {
 function submitEdit() {
     if (!editForm.id) return;
 
-    console.log(editForm);
+    editForm
+        .transform((data) => ({
+            ...data,
+            _method: "put",
+        }))
+        .post(route("admin.couriers.update", editForm.id), {
+            preserveScroll: true,
+            onSuccess: () => closeModal(),
+        });
+}
 
-    // editForm
-    //     .transform((data) => ({
-    //         ...data,
-    //         _method: "put",
-    //     }))
-    //     .post(route("admin.jersey-templates.update", editForm.id), {
-    //         forceFormData: true,
-    //         preserveScroll: true,
-    //         onSuccess: () => closeModal(),
-    //     });
+/* ---------------- DELETE ---------------- */
+
+const courierToDelete = ref<Courier | null>(null);
+
+const deleteForm = useForm({});
+
+function openDeleteModal(row: Courier) {
+    courierToDelete.value = row;
+    modal.title.value = "Delete Courier";
+    modal.type.value = "Delete";
+    modal.openModal();
+}
+
+function submitDelete() {
+    if (!courierToDelete.value) return;
+
+    deleteForm.delete(
+        route("admin.couriers.destroy", courierToDelete.value.id),
+        {
+            preserveScroll: true,
+            onSuccess: () => closeModal(),
+        },
+    );
 }
 </script>
 
@@ -187,15 +182,21 @@ function submitEdit() {
             </div>
             <hr class="mb-4 mt-2" />
             <Table
-                :data="courierTemplates"
+                :data="props.couriers"
                 :columns="columns"
                 date-key="created_at"
             >
                 <template #site="{ row }">
-                    <a :href="row.site" target="_blank" class="text-blue-600 underline">
+                    <a
+                        v-if="row.site"
+                        :href="row.site"
+                        target="_blank"
+                        class="text-blue-600 underline"
+                    >
                         <font-awesome-icon icon="fa-solid fa-link" />
                         {{ row.name }}
                     </a>
+                    <span v-else class="text-gray-400">—</span>
                 </template>
 
                 <template #status="{ row }">
@@ -212,7 +213,7 @@ function submitEdit() {
                 </template>
 
                 <template #actions="{ row }">
-                    <div class="flex items-center justify-center">
+                    <div class="flex items-center justify-center gap-2">
                         <button
                             type="button"
                             class="text-xs font-medium bg-gray-600 text-white rounded-md px-2 py-2 transition-colors hover:bg-gray-500"
@@ -220,6 +221,14 @@ function submitEdit() {
                         >
                             <font-awesome-icon icon="fa-solid fa-edit" />
                             Edit
+                        </button>
+                        <button
+                            type="button"
+                            class="text-xs font-medium bg-red-600 text-white rounded-md px-2 py-2 transition-colors hover:bg-red-500"
+                            @click="openDeleteModal(row)"
+                        >
+                            <font-awesome-icon icon="fa-solid fa-trash" />
+                            Delete
                         </button>
                     </div>
                 </template>
@@ -285,7 +294,14 @@ function submitEdit() {
                         type="submit"
                         class="flex items-center justify-center gap-1"
                         :disabled="addForm.processing"
+                        :class="{ 'opacity-25': addForm.processing }"
                     >
+                        <div class="text-sm" v-if="addForm.processing">
+                            <font-awesome-icon
+                                icon="fa-solid fa-spinner"
+                                spin
+                            />
+                        </div>
                         Save
                         <font-awesome-icon icon="fa-solid fa-circle-down" />
                     </PrimaryButton>
@@ -308,11 +324,11 @@ function submitEdit() {
 
                 <div class="flex flex-col gap-4">
                     <div>
-                        <InputLabel for="name" value="Name" />
+                        <InputLabel for="edit-name" value="Name" />
                         <TextInput
                             v-model="editForm.name"
                             class="mt-1 block w-full"
-                            id="name"
+                            id="edit-name"
                             required
                             placeholder="e.g. DHL"
                         />
@@ -323,11 +339,11 @@ function submitEdit() {
                     </div>
 
                     <div>
-                        <InputLabel for="site" value="Site" />
+                        <InputLabel for="edit-site" value="Site" />
                         <TextAreaInput
                             v-model="editForm.site"
                             class="mt-1 block w-full"
-                            id="site"
+                            id="edit-site"
                             rows="3"
                             placeholder="e.g. https://example.com/track?..."
                         />
@@ -338,12 +354,12 @@ function submitEdit() {
                     </div>
 
                     <div>
-                        <InputLabel for="status" value="Status" />
+                        <InputLabel for="edit-status" value="Status" />
                         <SelectInput
                             v-model="editForm.status"
                             :options="statusOptions"
                             class="mt-1 block w-full"
-                            id="status"
+                            id="edit-status"
                             required
                         />
                         <InputError
@@ -368,13 +384,71 @@ function submitEdit() {
                     <PrimaryButton
                         type="submit"
                         class="flex items-center justify-center gap-1"
-                        :disabled="editForm.processing"
+                        :class="{ 'opacity-25': editForm.processing }"
                     >
+                        <div class="text-sm" v-if="editForm.processing">
+                            <font-awesome-icon
+                                icon="fa-solid fa-spinner"
+                                spin
+                            />
+                        </div>
                         Save
                         <font-awesome-icon icon="fa-solid fa-circle-down" />
                     </PrimaryButton>
                 </div>
             </form>
+        </Modal>
+        <!-- Delete Modal -->
+        <Modal
+            :show="modal.type.value === 'Delete'"
+            @close="closeModal()"
+            :maxWidth="'md'"
+        >
+            <div class="px-4 pt-5 pb-4 sm:p-6">
+                <h2 class="text-lg font-medium text-gray-900">
+                    <font-awesome-icon icon="fa-solid fa-trash" />
+                    {{ modal.title.value }}
+                </h2>
+                <hr class="my-2" />
+
+                <p class="text-sm text-gray-600">
+                    Are you sure you want to delete
+                    <span class="font-semibold text-gray-900">{{
+                        courierToDelete?.name
+                    }}</span
+                    >? This action cannot be undone.
+                </p>
+
+                <hr class="mt-4" />
+                <div
+                    class="mt-2 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between"
+                >
+                    <SecondaryButton
+                        type="button"
+                        class="flex items-center justify-center"
+                        @click="closeModal()"
+                    >
+                        Cancel
+                    </SecondaryButton>
+
+                    <PrimaryButton
+                        type="button"
+                        class="flex items-center justify-center gap-1 !bg-red-600 hover:!bg-red-500"
+                        :disabled="deleteForm.processing"
+                        :class="{ 'opacity-25': deleteForm.processing }"
+                        @click="submitDelete"
+                    >
+                        <div class="text-sm" v-if="deleteForm.processing">
+                            <font-awesome-icon
+                                icon="fa-solid fa-spinner"
+                                spin
+                            />
+                        </div>
+                        Delete
+                        <font-awesome-icon icon="fa-solid fa-trash" />
+                    </PrimaryButton>
+                </div>
+            </div>
         </Modal>
     </AdminLayout>
 </template>
