@@ -60,6 +60,7 @@ function closeModal() {
     addForm.clearErrors();
     editForm.reset();
     editForm.clearErrors();
+    deleteForm.clearErrors();
     courierToDelete.value = null;
 }
 
@@ -135,7 +136,7 @@ function submitEdit() {
 
 const courierToDelete = ref<Courier | null>(null);
 
-const deleteForm = useForm({});
+const deleteForm = useForm<{ courier?: string }>({});
 
 function openDeleteModal(row: Courier) {
     courierToDelete.value = row;
@@ -418,10 +419,11 @@ function submitDelete() {
                     }}</span
                     >? This action cannot be undone.
                 </p>
-
+                
                 <hr class="mt-4" />
+                <InputError :message="deleteForm.errors.courier" class="mt-2" />
                 <div
-                    class="mt-2 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between"
+                    class="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between"
                 >
                     <SecondaryButton
                         type="button"

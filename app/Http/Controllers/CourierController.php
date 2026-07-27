@@ -45,6 +45,12 @@ class CourierController extends Controller
 
     public function destroy(Courier $courier): RedirectResponse
     {
+        if ($courier->courierReceipts()->exists()) {
+            return back()->withErrors([
+                'courier' => 'This courier has existing receipts and cannot be deleted. Set it to Inactive instead.',
+            ]);
+        }
+
         $courier->delete();
 
         return back()->with('success', 'Courier deleted successfully.');
