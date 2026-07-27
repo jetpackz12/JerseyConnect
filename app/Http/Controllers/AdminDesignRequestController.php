@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Address;
 use App\Models\DesignRequest;
+use App\Models\Order;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -24,7 +27,7 @@ class AdminDesignRequestController extends Controller
                 $array = $designRequest->toArray();
                 $array['original_template_image'] = $designRequest->template?->image_url;
                 unset($array['template']);
- 
+
                 return $array;
             });
 
@@ -44,7 +47,7 @@ class AdminDesignRequestController extends Controller
             'accent_color'     => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'status'           => [
                 'required',
-                'in:pending_review,in_discussion,revision_requested,waiting_for_down_payment,pending_down_payment_review,approved,cancelled',
+                'in:pending_review,in_discussion,revision_requested,waiting_for_down_payment',
             ],
         ]);
 
@@ -86,9 +89,29 @@ class AdminDesignRequestController extends Controller
             return redirect()->back()->with('error', 'This request has no payment awaiting review.');
         }
 
-        $designRequest->update(['status' => 'approved']);
+        DB::transaction(function () use ($designRequest) {
+            $designRequest->update(['status' => 'approved']);
 
-        return redirect()->back()->with('success', 'Payment approved.');
+            $order = Order::create([
+                'order_number'      => Order::generateOrderNumber(),
+                'design_request_id' => $designRequest->id,
+                'user_id'           => $designRequest->user_id,
+                'template_name'     => $designRequest->template_name,
+                'template_image'    => $designRequest->template_image,
+                'team_name'         => $designRequest->team_name,
+                'primary_color'     => $designRequest->primary_color,
+                'secondary_color'   => $designRequest->secondary_color,
+                'accent_color'      => $designRequest->accent_color,
+                'font_style'        => $designRequest->font_style,
+                'quantity'          => $designRequest->estimated_quantity,
+                'unit_price'        => $designRequest->template_price,
+                'status'            => 'processing',
+            ]);
+
+            Address::create(['order_id' => $order->id]);
+        });
+
+        return redirect()->back()->with('success', 'Payment approved — order created.');
     }
 
     public function rejectPayment(DesignRequest $designRequest)
