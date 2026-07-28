@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\DesignRequest;
+use App\Models\GcashSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -31,6 +32,7 @@ class DesignRequestController extends Controller
 
         return Inertia::render('Client/Design', [
             'data' => $data,
+            'gcash' => GcashSetting::current(),
         ]);
     }
 

@@ -9,12 +9,20 @@ import { useModal } from "@/Composables/useModal";
 import { Head, Link, useForm, router, usePoll } from "@inertiajs/vue3";
 import { ref, computed } from "vue";
 
+interface GcashSetting {
+    account_name: string;
+    account_number: string;
+    instructions: string | null;
+    qr_image_url: string | null;
+}
+
 const props = defineProps<{
     data?: DesignRequest[];
+    gcash: GcashSetting;
 }>();
 
 usePoll(5000, {
-    only: ["data"],
+    only: ["data", "gcash"],
 });
 
 const requests = computed(() => props.data ?? []);
@@ -485,7 +493,7 @@ function submitPayment() {
                                 class="flex h-32 w-32 items-center justify-center overflow-hidden rounded-lg border border-[#14202B]/10 bg-white p-1.5"
                             >
                                 <img
-                                    :src="gcashQrImage"
+                                    :src="gcash.qr_image_url ?? gcashQrImage"
                                     alt="GCash QR code"
                                     class="h-full w-full object-contain"
                                 />
@@ -504,7 +512,7 @@ function submitPayment() {
                             >
                                 Account Name
                             </p>
-                            <p class="text-[#14202B] font-medium">Juan D.</p>
+                            <p class="text-[#14202B] font-medium">{{ gcash.account_name }}</p>
 
                             <p
                                 class="mt-2 text-[10px] font-medium uppercase tracking-wide text-[#14202B]/40"
@@ -512,7 +520,7 @@ function submitPayment() {
                                 Account Number
                             </p>
                             <p class="text-[#14202B] font-medium">
-                                0917 123 4567
+                                {{ gcash.account_number }}
                             </p>
 
                             <p class="mt-2 text-xs text-[#14202B]/60">

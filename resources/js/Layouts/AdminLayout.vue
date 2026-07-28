@@ -40,7 +40,7 @@ const sidebarMenus = [
     },
     {
         menuName: "Gcash Details",
-        route: route("admin.gcash"),
+        route: route("admin.gcash.index"),
         icon: "fa-solid fa-wallet",
         hasBadge: true,
     },
