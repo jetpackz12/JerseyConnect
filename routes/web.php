@@ -9,6 +9,8 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\JerseyController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ChatController;
+use App\Http\Controllers\AdminMessageController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -23,6 +25,7 @@ Route::middleware(['auth', 'client'])->prefix('client')->name('client.')->group(
     Route::resource('home', HomeController::class)->only(['index']);
     Route::resource('design', DesignRequestController::class)->only(['index']);
     Route::resource('orders', OrderController::class)->only(['index']);
+    Route::resource('chat', ChatController::class)->only(['index']);
 
     Route::middleware(['throttle:api'])->group(function () {
         Route::resource('home', HomeController::class)->only(['store']);
@@ -33,12 +36,10 @@ Route::middleware(['auth', 'client'])->prefix('client')->name('client.')->group(
 
         //Client Orders
         Route::patch('/orders/{order}/address', [OrderController::class, 'updateAddress'])->name('orders.update-address');
-    });
 
-    Route::prefix('chat')->name('chat.')->group(function () {
-        Route::get('/', function () {
-            return Inertia::render('Client/Chat');
-        })->name('index');
+        // Client Chat
+        Route::post('/chat/{thread}/reply', [ChatController::class, 'reply'])->name('chat.reply');
+        Route::patch('/chat/{thread}/read', [ChatController::class, 'markRead'])->name('chat.mark-read');
     });
 
     Route::prefix('profile')->name('profile.')->group(function () {
@@ -56,6 +57,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::resource('orders', AdminOrderController::class)->only(['index']);
     Route::resource('couriers', CourierController::class)->only(['index']);
     Route::resource('gcash', GcashSettingController::class)->only(['index']);
+    Route::resource('messages', AdminMessageController::class)->only(['index']);
 
     Route::middleware(['throttle:api'])->group(function () {
         Route::resource('jersey', JerseyController::class)->only(['store', 'update', 'destroy']);
@@ -73,9 +75,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::resource('couriers', CourierController::class)->only(['store', 'update', 'destroy']);
 
         // Admin Gcash
-
         Route::put('/gcash/details', [GcashSettingController::class, 'updateDetails'])->name('gcash.details-update');
         Route::post('/gcash/qr', [GcashSettingController::class, 'updateQr'])->name('gcash.qr-update');
+
+        // Admin Messages
+        Route::post('/messages/{thread}/reply', [AdminMessageController::class, 'reply'])->name('messages.reply');
+        Route::patch('/messages/{thread}/read', [AdminMessageController::class, 'markRead'])->name('messages.mark-read');
     });
 
     Route::get('/sales', function () {
@@ -85,10 +90,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/shipping', function () {
         return Inertia::render('Admin/Shipping');
     })->name('shipping');
-
-    Route::get('/messages', function () {
-        return Inertia::render('Admin/Messages');
-    })->name('messages');
 
     Route::get('/users', function () {
         return Inertia::render('Admin/Users');

@@ -2,8 +2,10 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\MessageThread;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
+use Inertia\Inertia;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -29,11 +31,41 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        return [
-            ...parent::share($request),
+        return array_merge(parent::share($request), [
             'auth' => [
                 'user' => $request->user() ? $request->user()->load('userInfo') : null,
             ],
-        ];
+            'unreadMessagesCount' => Inertia::always(
+                fn () => $this->unreadMessagesCount($request)
+            ),
+        ]);
+    }
+
+    private function unreadMessagesCount(Request $request): int
+    {
+        $user = $request->user();
+        if (! $user) {
+            return 0;
+        }
+
+        $query = MessageThread::query()->with('messages');
+
+        if ($user->role !== 'admin') {
+            $query->whereHas('designRequest', fn($q) => $q->where('user_id', $user->id));
+        }
+
+        return $query->get()->filter(function (MessageThread $thread) use ($user) {
+            $last = $thread->messages->sortByDesc('created_at')->first();
+
+            if (! $last || $last->user_id === $user->id) {
+                return false;
+            }
+
+            $lastReadAt = $user->role === 'admin'
+                ? $thread->admin_last_read_at
+                : $thread->client_last_read_at;
+
+            return ! $lastReadAt || $last->created_at->gt($lastReadAt);
+        })->count();
     }
 }

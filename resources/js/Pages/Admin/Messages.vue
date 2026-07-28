@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import AdminLayout from "@/Layouts/AdminLayout.vue";
-import { Head, Link } from "@inertiajs/vue3";
+import { Head, Link, router, useForm, usePoll } from "@inertiajs/vue3";
 import { ref, computed, onMounted } from "vue";
 import type {
     MessageThread,
-    ThreadMessage,
     ConversationStage,
 } from "@/types/messages";
 
@@ -24,154 +23,10 @@ const props = withDefaults(
     },
 );
 
-// ── Static mock data (swap for props.threads once the backend is wired up) ──
-const mockThreads = ref<MessageThread[]>([
-    {
-        id: 1,
-        design_request_id: 2,
-        design_request_ref: "DR-2026-0002",
-        order_id: null,
-        order_ref: null,
-        stage: "design",
-        status_key: "in_discussion",
-        status_label: "In Discussion",
-        status_class: "bg-blue-100 text-blue-700",
-        team_name: "Molo Warriors",
-        template_name: "Vortex Fade",
-        template_image: "/images/image2.png",
-        client_name: "Renz Villaflor",
-        read: true,
-        updated_at: "2026-07-18T14:45:00Z",
-        closed: false,
-        messages: [
-            {
-                id: "m1",
-                from: "client",
-                name: "Renz Villaflor",
-                body: "Hi! Can we make the fade go from green to yellow instead of green to navy?",
-                time: "Jul 18, 2:10 PM",
-            },
-            {
-                id: "m2",
-                from: "admin",
-                name: "Captain Rodel",
-                body: "Sure, that works well with your accent color. I'll have the artist update the mockup and send it over.",
-                time: "Jul 18, 2:30 PM",
-            },
-            {
-                id: "m3",
-                from: "admin",
-                name: "Captain Rodel",
-                body: "Updated mockup attached — let us know if the gradient balance looks right.",
-                time: "Jul 18, 2:45 PM",
-                attachment_url: "/images/image2.png",
-                attachment_name: "vortex-fade-mockup-v2.png",
-            },
-        ],
-    },
-    {
-        id: 2,
-        design_request_id: 3,
-        design_request_ref: "DR-2026-0003",
-        order_id: null,
-        order_ref: null,
-        stage: "design",
-        status_key: "revision_requested",
-        status_label: "Revision Requested",
-        status_class: "bg-orange-100 text-orange-700",
-        team_name: "Jaro Falcons",
-        template_name: "Retro Stripe",
-        template_image: "/images/image3.png",
-        client_name: "Carlo Reyes",
-        read: false,
-        updated_at: "2026-07-20T09:05:00Z",
-        closed: false,
-        messages: [
-            {
-                id: "m1",
-                from: "client",
-                name: "Carlo Reyes",
-                body: "The sponsor logo is too close to the number on the back. Can it move down, below the number instead?",
-                time: "Jul 20, 9:05 AM",
-            },
-        ],
-    },
-    {
-        id: 3,
-        design_request_id: 4,
-        design_request_ref: "DR-2026-0004",
-        order_id: 4,
-        order_ref: "ORD-2026-0004",
-        stage: "order",
-        status_key: "shipped",
-        status_label: "Shipped",
-        status_class: "bg-indigo-100 text-indigo-700",
-        team_name: "Arevalo Titans",
-        template_name: "Minimalist Crest",
-        template_image: "/images/image4.png",
-        client_name: "Marco Villanueva",
-        read: false,
-        updated_at: "2026-07-19T14:05:00Z",
-        closed: false,
-        messages: [
-            {
-                id: "m1",
-                from: "admin",
-                name: "System",
-                body: "Design approved. This conversation now follows your order through production and delivery.",
-                time: "Jul 05, 10:00 AM",
-            },
-            {
-                id: "m2",
-                from: "admin",
-                name: "Captain Rodel",
-                body: "Your order has shipped via J&T Express. Tracking number: JT-88213764521.",
-                time: "Jul 19, 2:00 PM",
-            },
-            {
-                id: "m3",
-                from: "client",
-                name: "Marco Villanueva",
-                body: "Thank you! How many days until it arrives in Iloilo?",
-                time: "Jul 19, 2:05 PM",
-            },
-        ],
-    },
-    {
-        id: 4,
-        design_request_id: 9,
-        design_request_ref: "DR-2026-0009",
-        order_id: 5,
-        order_ref: "ORD-2026-0005",
-        stage: "order",
-        status_key: "delivered",
-        status_label: "Delivered",
-        status_class: "bg-teal-100 text-teal-700",
-        team_name: "Cebu Coastal Runners",
-        template_name: "Vortex Fade",
-        template_image: "/images/image2.png",
-        client_name: "Anna Bautista",
-        read: true,
-        updated_at: "2026-07-14T10:00:00Z",
-        closed: false,
-        messages: [
-            {
-                id: "m1",
-                from: "admin",
-                name: "System",
-                body: "Your order has been delivered. Let us know if everything checks out!",
-                time: "Jul 14, 10:00 AM",
-            },
-            {
-                id: "m2",
-                from: "client",
-                name: "Anna Bautista",
-                body: "Received, everything looks great. Thank you!",
-                time: "Jul 14, 11:20 AM",
-            },
-        ],
-    },
-]);
+// Threads/messages are fully server-driven now — no local mock data and no
+// client-side stub creation. A thread always exists once a design request
+// has been submitted (created server-side in DesignRequest::booted()).
+usePoll(5000, { only: ["threads"] });
 
 // ── State ────────────────────────────────────────────────────────────────────
 type TabKey = "all" | "design" | "order";
@@ -180,7 +35,6 @@ const activeThread = ref<MessageThread | null>(null);
 const replyText = ref<string>("");
 const replyImage = ref<File | null>(null);
 const replyImagePreview = ref<string | null>(null);
-const senderName = ref<string>("Captain Rodel");
 const threadBody = ref<HTMLElement | null>(null);
 
 const tabs: { key: TabKey; label: string }[] = [
@@ -190,9 +44,7 @@ const tabs: { key: TabKey; label: string }[] = [
 ];
 
 // ── Computed ─────────────────────────────────────────────────────────────────
-const threads = computed<MessageThread[]>(() =>
-    props.threads?.length ? props.threads : mockThreads.value,
-);
+const threads = computed<MessageThread[]>(() => props.threads ?? []);
 
 const unreadCount = computed<number>(
     () => threads.value.filter((t) => !t.read).length,
@@ -213,9 +65,21 @@ const filtered = computed<MessageThread[]>(() => {
     return sorted.value;
 });
 
+// Keep activeThread pointing at the live object from `threads` after every
+// poll/refresh, instead of a stale snapshot.
+const liveActiveThread = computed<MessageThread | null>(() => {
+    if (!activeThread.value) return null;
+    return (
+        threads.value.find((t) => t.id === activeThread.value!.id) ??
+        activeThread.value
+    );
+});
+
 function lastMessagePreview(thread: MessageThread): string {
     const last = thread.messages[thread.messages.length - 1];
-    return last ? last.body : "No messages yet";
+    if (!last) return "No messages yet";
+    if (last.body) return last.body;
+    return last.attachment_url ? "📷 Image" : "No messages yet";
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -231,10 +95,21 @@ function stagePillLabel(stage: ConversationStage): string {
 
 // ── Actions ──────────────────────────────────────────────────────────────────
 function openThread(thread: MessageThread): void {
-    thread.read = true;
     activeThread.value = thread;
     replyText.value = "";
-    // TODO: axios.patch(route('admin.messages.markRead', thread.id))
+
+    if (!thread.read) {
+        router.patch(
+            route("admin.messages.mark-read", thread.id),
+            {},
+            {
+                preserveScroll: true,
+                preserveState: true,
+                only: ["threads"],
+            },
+        );
+    }
+
     scrollThread();
 }
 
@@ -266,65 +141,31 @@ function openAttachment(url: string): void {
 function sendReply(thread: MessageThread): void {
     if ((!replyText.value.trim() && !replyImage.value) || thread.closed)
         return;
-    const msg: ThreadMessage = {
-        id: `${thread.id}-${Date.now()}`,
-        from: "admin",
-        name: senderName.value,
+
+    const form = useForm({
         body: replyText.value.trim(),
-        time: "Just now",
-        attachment_url: replyImagePreview.value,
-        attachment_name: replyImage.value?.name ?? null,
-    };
-    thread.messages.push(msg);
-    thread.updated_at = new Date().toISOString();
-    replyText.value = "";
-    removeReplyImage();
-    scrollThread();
-    // TODO: axios.post(route('admin.messages.reply', thread.id), formData)
-    // where formData carries { body, sender, attachment } — use
-    // forceFormData / useForm() once this is wired to a real endpoint,
-    // the same way the client's GCash payment-proof upload works.
+        image: replyImage.value,
+    });
+
+    form.post(route("admin.messages.reply", thread.id), {
+        forceFormData: true,
+        preserveScroll: true,
+        preserveState: true,
+        only: ["threads"],
+        onSuccess: () => {
+            replyText.value = "";
+            removeReplyImage();
+            scrollThread();
+        },
+    });
 }
 
-/**
- * Finds (or, for a brand-new design request with no admin reply yet, creates
- * a stub for) the thread tied to a given design_request_id, and opens it.
- * This is what makes the "Message" button on the Design Request / Order
- * tables land on the right conversation.
- */
+/** Opens the thread tied to a given design_request_id, if it exists. */
 function resolveAndOpenByDesignRequestId(designRequestId: number): void {
-    const existing = threads.value.find(
+    const thread = threads.value.find(
         (t) => t.design_request_id === designRequestId,
     );
-    if (existing) {
-        openThread(existing);
-        return;
-    }
-
-    // No conversation yet — create an empty stub. In production this data
-    // (team name, template, ref, status) would come from the backend
-    // record instead of being guessed here.
-    const stub: MessageThread = {
-        id: Date.now(),
-        design_request_id: designRequestId,
-        design_request_ref: `DR-2026-${String(designRequestId).padStart(4, "0")}`,
-        order_id: null,
-        order_ref: null,
-        stage: "design",
-        status_key: "pending_review",
-        status_label: "Pending Review",
-        status_class: "bg-yellow-100 text-yellow-700",
-        team_name: "—",
-        template_name: "—",
-        template_image: "/images/image1.png",
-        client_name: "—",
-        read: true,
-        updated_at: new Date().toISOString(),
-        closed: false,
-        messages: [],
-    };
-    mockThreads.value.unshift(stub);
-    openThread(stub);
+    if (thread) openThread(thread);
 }
 
 onMounted(() => {
@@ -466,7 +307,7 @@ onMounted(() => {
                 >
                     <!-- Empty state -->
                     <div
-                        v-if="!activeThread"
+                        v-if="!liveActiveThread"
                         class="flex flex-1 flex-col items-center justify-center text-gray-400 gap-3"
                     >
                         <span class="text-5xl">
@@ -507,61 +348,57 @@ onMounted(() => {
                                     </svg>
                                 </button>
                                 <img
-                                    :src="activeThread.template_image"
-                                    :alt="activeThread.template_name"
+                                    :src="liveActiveThread.template_image"
+                                    :alt="liveActiveThread.template_name"
                                     class="h-10 w-10 flex-shrink-0 rounded object-contain bg-gray-100 p-1"
                                 />
                                 <div class="min-w-0">
                                     <h3
                                         class="text-sm font-semibold text-slate-900 truncate"
                                     >
-                                        {{ activeThread.team_name }} —
-                                        {{ activeThread.template_name }}
+                                        {{ liveActiveThread.team_name }} —
+                                        {{ liveActiveThread.template_name }}
                                     </h3>
                                     <div
                                         class="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500"
                                     >
                                         <span>{{
-                                            activeThread.client_name
+                                            liveActiveThread.client_name
                                         }}</span>
                                         <span
                                             class="font-mono bg-gray-100 rounded px-1"
                                             >{{
-                                                activeThread.order_ref ??
-                                                activeThread.design_request_ref
+                                                liveActiveThread.order_ref ??
+                                                liveActiveThread.design_request_ref
                                             }}</span
                                         >
                                         <span
                                             class="rounded-full px-2 py-0.5 text-[10px] font-semibold"
                                             :class="
                                                 stagePillClass(
-                                                    activeThread.stage,
+                                                    liveActiveThread.stage,
                                                 )
                                             "
                                         >
                                             {{
                                                 stagePillLabel(
-                                                    activeThread.stage,
+                                                    liveActiveThread.stage,
                                                 )
                                             }}
                                         </span>
                                         <span
                                             class="rounded-full px-2 py-0.5 text-[10px] font-semibold"
-                                            :class="activeThread.status_class"
+                                            :class="liveActiveThread.status_class"
                                         >
-                                            {{ activeThread.status_label }}
+                                            {{ liveActiveThread.status_label }}
                                         </span>
                                     </div>
                                 </div>
                             </div>
                             <div class="flex gap-2 flex-shrink-0">
                                 <Link
-                                    v-if="activeThread.stage === 'order'"
-                                    :href="
-                                        route(
-                                            'admin.orders.index',
-                                        )
-                                    "
+                                    v-if="liveActiveThread.stage === 'order'"
+                                    :href="route('admin.orders.index')"
                                     class="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 transition"
                                 >
                                     <font-awesome-icon
@@ -571,12 +408,7 @@ onMounted(() => {
                                 </Link>
                                 <Link
                                     v-else
-                                    :href="
-                                        route(
-                                            'admin.design',
-                                            activeThread.design_request_id,
-                                        )
-                                    "
+                                    :href="route('admin.design.index')"
                                     class="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 transition"
                                 >
                                     <font-awesome-icon
@@ -593,18 +425,18 @@ onMounted(() => {
                             class="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-3"
                         >
                             <div
-                                v-if="activeThread.messages.length === 0"
+                                v-if="liveActiveThread.messages.length === 0"
                                 class="flex h-full flex-col items-center justify-center gap-2 text-center text-gray-400"
                             >
                                 <span class="text-3xl">💬</span>
                                 <p class="text-sm">
                                     No messages yet — say hello to
-                                    {{ activeThread.client_name }} to start
-                                    the design discussion.
+                                    {{ liveActiveThread.client_name }} to
+                                    start the design discussion.
                                 </p>
                             </div>
                             <div
-                                v-for="msg in activeThread.messages"
+                                v-for="msg in liveActiveThread.messages"
                                 :key="msg.id"
                                 class="flex"
                                 :class="
@@ -650,7 +482,7 @@ onMounted(() => {
                             class="border-t border-gray-100 px-4 sm:px-6 py-4"
                         >
                             <div
-                                v-if="activeThread.closed"
+                                v-if="liveActiveThread.closed"
                                 class="rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-500"
                             >
                                 <font-awesome-icon
@@ -660,20 +492,6 @@ onMounted(() => {
                                 now read-only.
                             </div>
                             <template v-else>
-                                <div class="mb-2 flex items-center gap-2">
-                                    <span class="text-xs text-gray-500"
-                                        >Reply as:</span
-                                    >
-                                    <select
-                                        v-model="senderName"
-                                        class="rounded-md border border-gray-200 py-1 text-xs text-gray-700 focus:border-blue-900 focus:outline-none"
-                                    >
-                                        <option>Captain Rodel</option>
-                                        <option
-                                            >The Butal Ship Hauz Team</option
-                                        >
-                                    </select>
-                                </div>
                                 <div
                                     v-if="replyImagePreview"
                                     class="relative mb-2 inline-block"
@@ -699,7 +517,7 @@ onMounted(() => {
                                     placeholder="Type your reply here…"
                                     class="w-full resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-900/10"
                                     @keydown.ctrl.enter="
-                                        sendReply(activeThread)
+                                        sendReply(liveActiveThread)
                                     "
                                 />
                                 <div
@@ -730,7 +548,7 @@ onMounted(() => {
                                             !replyText.trim() && !replyImage
                                         "
                                         class="flex items-center gap-2 rounded-lg bg-ink px-4 py-1.5 text-sm font-semibold text-white hover:bg-ink/90 transition disabled:cursor-not-allowed disabled:opacity-40"
-                                        @click="sendReply(activeThread)"
+                                        @click="sendReply(liveActiveThread)"
                                     >
                                         Send
                                         <font-awesome-icon

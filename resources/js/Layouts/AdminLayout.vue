@@ -1,10 +1,12 @@
 <script setup>
 import { ref, computed } from "vue";
-import { Link, usePage } from "@inertiajs/vue3";
+import { Link, usePage, usePoll  } from "@inertiajs/vue3";
 
 const unreadMessagesCount = computed(
-    () => page.props.unreadAdminMessagesCount ?? 0,
+    () => page.props.unreadMessagesCount  ?? 0,
 );
+
+usePoll(15000, { only: ["unreadMessagesCount"] });
 
 const isShowSideBar = ref(true);
 const page = usePage();
@@ -46,7 +48,7 @@ const sidebarMenus = [
     },
     {
         menuName: "Messages",
-        route: route("admin.messages"),
+        route: route("admin.messages.index"),
         icon: "fa-solid fa-envelope",
         hasBadge: true,
     },

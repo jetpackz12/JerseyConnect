@@ -389,7 +389,7 @@ function submitEdit() {
                                 row.status !== 'cancelled'
                             "
                             class="text-xs font-medium bg-orange-600 text-white rounded-md px-2 py-2 transition-colors hover:bg-orange-500"
-                            :href="route('admin.messages')"
+                            :href="route('admin.messages.index')"
                         >
                             <font-awesome-icon icon="fa-solid fa-message" />
                             Message

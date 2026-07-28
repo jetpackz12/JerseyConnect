@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { Link, usePage } from "@inertiajs/vue3";
+import { Link, usePage, usePoll } from "@inertiajs/vue3";
 
-const unreadMessagesCount = ref(0);
+const unreadMessagesCount = computed(() => (page.props.unreadMessagesCount as number) ?? 0);
+
+usePoll(15000, { only: ["unreadMessagesCount"] });
 
 const isShowSideBar = ref(true);
 const page = usePage();
@@ -96,10 +98,7 @@ const isActive = (href: string | URL) =>
                         <div class="relative">
                             <font-awesome-icon :icon="menu.icon" />
                             <span
-                                v-if="
-                                    menu.menuName === 'Notifications' &&
-                                    unreadMessagesCount > 0
-                                "
+                                v-if="menu.menuName === 'Messages' && unreadMessagesCount > 0"
                                 class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"
                             />
                         </div>

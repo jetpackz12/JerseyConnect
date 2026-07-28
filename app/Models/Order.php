@@ -72,4 +72,9 @@ class Order extends Model
         $count = self::where('order_number', 'like', "ORD-{$year}-%")->count();
         return sprintf('ORD-%d-%04d', $year, $count + 1);
     }
+    
+    public function messageThread()
+    {
+        return $this->designRequest?->messageThread;
+    }
 }
