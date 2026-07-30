@@ -61,9 +61,6 @@ class AdminDesignRequestController extends Controller
         ];
 
         if ($request->hasFile('image')) {
-            if ($designRequest->template_image) {
-                Storage::disk('public')->delete($designRequest->template_image);
-            }
             $data['template_image'] = $request->file('image')->store('design-requests/designs', 'public');
         }
 
