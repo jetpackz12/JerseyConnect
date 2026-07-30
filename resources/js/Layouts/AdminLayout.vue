@@ -54,7 +54,7 @@ const sidebarMenus = [
     },
     {
         menuName: "Users",
-        route: route("admin.users"),
+        route: route("admin.users.index"),
         icon: "fa-solid fa-users",
     },
 ];

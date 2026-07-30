@@ -33,6 +33,21 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        if (Auth::user()->status === 'inactive') {
+            Auth::guard('web')->logout();
+
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')->withErrors([
+                'email' => 'Your account is inactive. Please contact customer service.',
+            ]);
+        }
+
+        if (Auth::user()->role == 'admin') {
+            return redirect()->intended(route('admin.dashboard'));
+        }
+
         return redirect()->intended(route('client.home.index', absolute: false));
     }
 

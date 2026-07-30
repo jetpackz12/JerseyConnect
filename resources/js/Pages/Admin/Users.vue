@@ -4,14 +4,12 @@ import Table from "@/Components/Table.vue";
 import Modal from "@/Components/Modal.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
 import SecondaryButton from "@/Components/SecondaryButton.vue";
-import TextInput from "@/Components/TextInput.vue";
-import TextAreaInput from "@/Components/TextAreaInput.vue";
 import SelectInput from "@/Components/SelectInput.vue";
 import InputLabel from "@/Components/InputLabel.vue";
 import InputError from "@/Components/InputError.vue";
 import { useModal } from "@/Composables/useModal";
 import { Head, useForm } from "@inertiajs/vue3";
-import { ref } from "vue";
+import { ref, computed } from "vue";
 
 interface userInfo {
     id: number;
@@ -35,49 +33,12 @@ interface User {
 }
 
 const props = defineProps<{
-    requests?: User[];
+    data?: User[];
 }>();
 
 type userStatus = "active" | "inactive";
 
-const userTemplates = ref<User[]>([
-    {
-        id: 1,
-        user_info: {
-            id: 1,
-            first_name: "John",
-            middle_name: "Doe",
-            last_name: "Doe",
-            birth_date: "1990-01-01",
-            phone: "1234567890",
-            address: "123 Main St",
-            created_at: "2026-07-01T09:15:00Z",
-            updated_at: "2026-07-01T09:15:00Z",
-        },
-        email: "john@example.com",
-        status: "active",
-        created_at: "2026-07-01T09:15:00Z",
-        updated_at: "2026-07-01T09:15:00Z",
-    },
-    {
-        id: 2,
-        user_info: {
-            id: 2,
-            first_name: "Jane",
-            middle_name: "Doe",
-            last_name: "Doe",
-            birth_date: "1990-01-01",
-            phone: "1234567890",
-            address: "123 Main St",
-            created_at: "2026-07-01T09:15:00Z",
-            updated_at: "2026-07-01T09:15:00Z",
-        },
-        email: "jane@example.com",
-        status: "inactive",
-        created_at: "2026-07-02T09:15:00Z",
-        updated_at: "2026-07-01T09:15:00Z",
-    },
-]);
+const users = computed(() => props.data ?? []);
 
 const userStatus: Record<userStatus, { label: string; class: string }> = {
     active: {
@@ -151,19 +112,10 @@ function openEditModal(row: User) {
 
 function submitEdit() {
     if (!editForm.id) return;
-
-    console.log(editForm);
-
-    // editForm
-    //     .transform((data) => ({
-    //         ...data,
-    //         _method: "put",
-    //     }))
-    //     .post(route("admin.jersey-templates.update", editForm.id), {
-    //         forceFormData: true,
-    //         preserveScroll: true,
-    //         onSuccess: () => closeModal(),
-    //     });
+    editForm.put(route("admin.user.update", editForm.id), {
+        preserveScroll: true,
+        onSuccess: () => closeModal(),
+    });
 }
 </script>
 
@@ -181,11 +133,7 @@ function submitEdit() {
                 </h1>
             </div>
             <hr class="mb-4 mt-2" />
-            <Table
-                :data="userTemplates"
-                :columns="columns"
-                date-key="created_at"
-            >
+            <Table :data="users" :columns="columns" date-key="created_at">
                 <template #first_name="{ row }">
                     {{ row.user_info.first_name }}
                 </template>

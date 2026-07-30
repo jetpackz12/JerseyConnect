@@ -11,6 +11,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\AdminMessageController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -58,6 +59,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::resource('couriers', CourierController::class)->only(['index']);
     Route::resource('gcash', GcashSettingController::class)->only(['index']);
     Route::resource('messages', AdminMessageController::class)->only(['index']);
+    Route::resource('users', UserController::class)->only(['index']);
 
     Route::middleware(['throttle:api'])->group(function () {
         Route::resource('jersey', JerseyController::class)->only(['store', 'update', 'destroy']);
@@ -81,6 +83,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         // Admin Messages
         Route::post('/messages/{thread}/reply', [AdminMessageController::class, 'reply'])->name('messages.reply');
         Route::patch('/messages/{thread}/read', [AdminMessageController::class, 'markRead'])->name('messages.mark-read');
+
+        // Admin Users
+         Route::put('/users/{user}', [UserController::class, 'update'])->name('user.update');
     });
 
     Route::get('/sales', function () {
@@ -90,10 +95,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/shipping', function () {
         return Inertia::render('Admin/Shipping');
     })->name('shipping');
-
-    Route::get('/users', function () {
-        return Inertia::render('Admin/Users');
-    })->name('users');
 
     Route::get('profile', function () {
         return Inertia::render('Admin/Profile');
