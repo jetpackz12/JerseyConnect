@@ -88,17 +88,14 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
          Route::put('/users/{user}', [UserController::class, 'update'])->name('user.update');
     });
 
-    Route::get('/sales', function () {
-        return Inertia::render('Admin/Sales');
-    })->name('sales');
-
-    Route::get('/shipping', function () {
-        return Inertia::render('Admin/Shipping');
-    })->name('shipping');
-
     Route::get('profile', function () {
         return Inertia::render('Admin/Profile');
     })->name('profile');
+});
+
+Route::middleware('auth')->group(function () {
+    Route::put('/update-information', [ProfileController::class, 'updateInformation'])->name('update-information');
+    Route::put('/update-credentials', [ProfileController::class, 'updateCredentials'])->name('update-credentials');
 });
 
 require __DIR__ . '/auth.php';

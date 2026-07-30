@@ -11,13 +11,6 @@ class UserInfo extends Model
 {
     use HasFactory;
 
-    protected function casts(): array
-    {
-        return [
-            'birth_date' => 'date',
-        ];
-    }
-
     public function user()
     {
         return $this->hasOne(User::class);
