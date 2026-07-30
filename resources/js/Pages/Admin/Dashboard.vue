@@ -2,134 +2,75 @@
 import AdminLayout from "@/Layouts/AdminLayout.vue";
 import Table from "@/Components/Table.vue";
 import { Head } from "@inertiajs/vue3";
+import { computed } from "vue";
 
-const stats = {
-    totalOrders: { value: 128, change: 12.4 },
-    revenue: { value: 84250, change: 8.1 },
-    pendingDesignRequests: { value: 5, change: -2 },
-    pendingGcash: { value: 3, change: 0 },
-    unreadMessages: { value: 7, change: 4 },
-    newUsers: { value: 21, change: 15.6 },
-};
+interface StatBlock {
+    value: number;
+    change: number;
+}
 
-const bestSellingTemplates = [
-    { name: "Classic Home Jersey", sold: 42 },
-    { name: "Away Kit 2026", sold: 35 },
-    { name: "Retro Edition", sold: 27 },
-    { name: "Training Jersey", sold: 19 },
-];
-const maxSold = Math.max(...bestSellingTemplates.map((t) => t.sold));
+interface Stats {
+    totalOrders: StatBlock;
+    revenue: StatBlock;
+    pendingDesignRequests: StatBlock;
+    pendingGcash: StatBlock;
+    unreadMessages: StatBlock;
+    newUsers: StatBlock;
+}
 
-const recentOrders = [
-    {
-        id: "JC-1042",
-        customer: "Mark Villanueva",
-        template: "Classic Home Jersey",
-        amount: 950,
-        status: "Processing",
-        courier: "J&T Express",
-        date: "Jul 17, 2026",
-    },
-    {
-        id: "JC-1041",
-        customer: "Aira Santos",
-        template: "Away Kit 2026",
-        amount: 1050,
-        status: "Pending",
-        courier: "-",
-        date: "Jul 17, 2026",
-    },
-    {
-        id: "JC-1040",
-        customer: "Josh Reyes",
-        template: "Retro Edition",
-        amount: 890,
-        status: "Shipped",
-        courier: "LBC",
-        date: "Jul 16, 2026",
-    },
-    {
-        id: "JC-1039",
-        customer: "Cyra Gomez",
-        template: "Training Jersey",
-        amount: 750,
-        status: "Delivered",
-        courier: "Ninja Van",
-        date: "Jul 16, 2026",
-    },
-    {
-        id: "JC-1038",
-        customer: "Dan Ilagan",
-        template: "Classic Home Jersey",
-        amount: 950,
-        status: "Cancelled",
-        courier: "-",
-        date: "Jul 15, 2026",
-    },
-];
+interface BestSellingTemplate {
+    name: string;
+    sold: number;
+}
 
-const needsAttention = [
-    {
-        label: "GCash payments awaiting verification",
-        count: 3,
-        icon: "fa-solid fa-wallet",
-    },
-    {
-        label: "Design requests pending review",
-        count: 5,
-        icon: "fa-solid fa-spray-can-sparkles",
-    },
-    {
-        label: "Orders stuck in Processing 3+ days",
-        count: 2,
-        icon: "fa-solid fa-triangle-exclamation",
-    },
-];
+interface RecentOrder {
+    id: string;
+    customer: string;
+    template: string;
+    amount: number;
+    status: string;
+    courier: string;
+    date: string;
+}
 
-const designRequests = [
-    { customer: "Mark Villanueva", status: "New", date: "Jul 17, 2026" },
-    { customer: "Bea Fernandez", status: "In Review", date: "Jul 16, 2026" },
-    { customer: "Kim Uy", status: "Approved", date: "Jul 15, 2026" },
-];
+interface NeedsAttentionItem {
+    label: string;
+    count: number;
+    icon: string;
+}
 
-const gcashTransactions = [
-    {
-        ref: "GC-88213",
-        customer: "Aira Santos",
-        amount: 1050,
-        status: "Pending",
-    },
-    {
-        ref: "GC-88190",
-        customer: "Josh Reyes",
-        amount: 890,
-        status: "Verified",
-    },
-    {
-        ref: "GC-88177",
-        customer: "Cyra Gomez",
-        amount: 750,
-        status: "Verified",
-    },
-];
+interface DesignRequestItem {
+    customer: string;
+    status: string;
+    date: string;
+}
 
-const recentMessages = [
-    {
-        customer: "Mark Villanueva",
-        preview: "Hi, can I still change the jersey size after ordering?",
-        time: "10:24 AM",
-    },
-    {
-        customer: "Bea Fernandez",
-        preview: "Is the design request for team logo approved?",
-        time: "Yesterday",
-    },
-    {
-        customer: "Josh Reyes",
-        preview: "My order says shipped, do you have the tracking no?",
-        time: "Yesterday",
-    },
-];
+interface GcashTransaction {
+    ref: string;
+    customer: string;
+    amount: number;
+    status: string;
+}
+
+interface RecentMessage {
+    customer: string;
+    preview: string;
+    time: string;
+}
+
+const props = defineProps<{
+    stats: Stats;
+    bestSellingTemplates: BestSellingTemplate[];
+    recentOrders: RecentOrder[];
+    needsAttention: NeedsAttentionItem[];
+    designRequests: DesignRequestItem[];
+    gcashTransactions: GcashTransaction[];
+    recentMessages: RecentMessage[];
+}>();
+
+const maxSold = computed(() =>
+    Math.max(...props.bestSellingTemplates.map((t) => t.sold), 1)
+);
 
 const orderColumns = [
     { key: "id", label: "Order" },
@@ -142,16 +83,25 @@ const orderColumns = [
 
 function statusColor(status: string) {
     const map: Record<string, string> = {
-        Pending: "bg-amber-100 text-amber-700",
+        // Order statuses
         Processing: "bg-blue-100 text-blue-700",
-        "For Shipping": "bg-indigo-100 text-indigo-700",
+        "In Production": "bg-indigo-100 text-indigo-700",
+        "Ready for Delivery": "bg-cyan-100 text-cyan-700",
         Shipped: "bg-purple-100 text-purple-700",
         Delivered: "bg-emerald-100 text-emerald-700",
-        Cancelled: "bg-rose-100 text-rose-700",
+        Completed: "bg-emerald-100 text-emerald-700",
+
+        // Design request statuses
         New: "bg-blue-100 text-blue-700",
+        "In Discussion": "bg-sky-100 text-sky-700",
+        "Revision Requested": "bg-orange-100 text-orange-700",
+        "Waiting for Payment": "bg-amber-100 text-amber-700",
         "In Review": "bg-amber-100 text-amber-700",
         Approved: "bg-emerald-100 text-emerald-700",
         Rejected: "bg-rose-100 text-rose-700",
+
+        // GCash statuses
+        Pending: "bg-amber-100 text-amber-700",
         Verified: "bg-emerald-100 text-emerald-700",
     };
     return map[status] ?? "bg-gray-100 text-gray-700";
@@ -230,7 +180,9 @@ function formatCurrency(value: number) {
                         <p class="mt-1 text-2xl font-semibold text-paper">
                             {{ stats.unreadMessages.value }}
                         </p>
-                        <p class="mt-1 text-xs text-gray-400">from customers</p>
+                        <p class="mt-1 text-xs text-gray-400">
+                            from customers
+                        </p>
                     </div>
                     <div class="rounded-lg bg-ink p-5 shadow-sm">
                         <p class="text-sm text-gray-500">New Users</p>
@@ -243,7 +195,7 @@ function formatCurrency(value: number) {
                     </div>
                 </div>
 
-                <!-- Order status + Best selling templates -->
+                <!-- Best selling templates + Needs Attention -->
                 <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
                     <div
                         class="rounded-lg bg-white p-6 shadow-sm lg:col-span-2"
@@ -252,7 +204,10 @@ function formatCurrency(value: number) {
                             Best-Selling Templates
                         </h3>
                         <hr class="mb-3 mt-2" />
-                        <div class="mt-4 space-y-3">
+                        <div
+                            v-if="bestSellingTemplates.length"
+                            class="mt-4 space-y-3"
+                        >
                             <div
                                 v-for="t in bestSellingTemplates"
                                 :key="t.name"
@@ -278,6 +233,9 @@ function formatCurrency(value: number) {
                                 </div>
                             </div>
                         </div>
+                        <p v-else class="mt-4 text-sm text-gray-400">
+                            No orders yet.
+                        </p>
                     </div>
                     <div class="rounded-lg bg-white p-6 shadow-sm">
                         <h3 class="font-semibold text-gray-900">
@@ -313,7 +271,7 @@ function formatCurrency(value: number) {
                     </div>
                 </div>
 
-                <!-- Recent Orders + Needs Attention -->
+                <!-- Recent Orders -->
                 <div class="grid grid-cols-1 gap-4">
                     <div
                         class="overflow-hidden rounded-lg bg-white shadow-sm p-4"
@@ -323,7 +281,7 @@ function formatCurrency(value: number) {
                                 Recent Orders
                             </h3>
                             <a
-                                href="#"
+                                :href="route('admin.orders.index')"
                                 class="text-xs font-medium border border-ink bg-ink/20 px-2 py-1 text-ink hover:bg-ink hover:text-white rounded-md transition-colors"
                             >
                                 View all
@@ -367,7 +325,7 @@ function formatCurrency(value: number) {
                                 Design Requests
                             </h3>
                             <a
-                                href="#"
+                                :href="route('admin.design.index')"
                                 class="text-xs font-medium border border-ink bg-ink/20 px-2 py-1 text-ink hover:bg-ink hover:text-white rounded-md transition-colors"
                             >
                                 View all
@@ -377,10 +335,13 @@ function formatCurrency(value: number) {
                             </a>
                         </div>
                         <hr class="mb-3 mt-2" />
-                        <ul class="mt-4 divide-y divide-gray-50">
+                        <ul
+                            v-if="designRequests.length"
+                            class="mt-4 divide-y divide-gray-50"
+                        >
                             <li
                                 v-for="d in designRequests"
-                                :key="d.customer"
+                                :key="d.customer + d.date"
                                 class="flex items-center justify-between py-2 text-sm"
                             >
                                 <div>
@@ -398,6 +359,9 @@ function formatCurrency(value: number) {
                                 >
                             </li>
                         </ul>
+                        <p v-else class="mt-4 text-sm text-gray-400">
+                            No design requests yet.
+                        </p>
                     </div>
 
                     <div class="rounded-lg bg-white p-6 shadow-sm">
@@ -406,7 +370,7 @@ function formatCurrency(value: number) {
                                 GCash Transactions
                             </h3>
                             <a
-                                href="#"
+                                :href="route('admin.gcash.index')"
                                 class="text-xs font-medium border border-ink bg-ink/20 px-2 py-1 text-ink hover:bg-ink hover:text-white rounded-md transition-colors"
                             >
                                 View all
@@ -416,7 +380,10 @@ function formatCurrency(value: number) {
                             </a>
                         </div>
                         <hr class="mb-3 mt-2" />
-                        <ul class="mt-4 divide-y divide-gray-50">
+                        <ul
+                            v-if="gcashTransactions.length"
+                            class="mt-4 divide-y divide-gray-50"
+                        >
                             <li
                                 v-for="g in gcashTransactions"
                                 :key="g.ref"
@@ -438,6 +405,9 @@ function formatCurrency(value: number) {
                                 >
                             </li>
                         </ul>
+                        <p v-else class="mt-4 text-sm text-gray-400">
+                            No GCash transactions yet.
+                        </p>
                     </div>
 
                     <div class="rounded-lg bg-white p-6 shadow-sm">
@@ -446,7 +416,7 @@ function formatCurrency(value: number) {
                                 Recent Messages
                             </h3>
                             <a
-                                href="#"
+                                :href="route('admin.messages.index')"
                                 class="text-xs font-medium border border-ink bg-ink/20 px-2 py-1 text-ink hover:bg-ink hover:text-white rounded-md transition-colors"
                             >
                                 View all
@@ -456,7 +426,10 @@ function formatCurrency(value: number) {
                             </a>
                         </div>
                         <hr class="mb-3 mt-2" />
-                        <ul class="mt-4 divide-y divide-gray-50">
+                        <ul
+                            v-if="recentMessages.length"
+                            class="mt-4 divide-y divide-gray-50"
+                        >
                             <li
                                 v-for="m in recentMessages"
                                 :key="m.customer + m.time"
@@ -477,6 +450,9 @@ function formatCurrency(value: number) {
                                 </p>
                             </li>
                         </ul>
+                        <p v-else class="mt-4 text-sm text-gray-400">
+                            No messages yet.
+                        </p>
                     </div>
                 </div>
             </div>
