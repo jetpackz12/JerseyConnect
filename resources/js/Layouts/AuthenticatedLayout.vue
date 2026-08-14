@@ -2,7 +2,9 @@
 import { ref, computed } from "vue";
 import { Link, usePage, usePoll } from "@inertiajs/vue3";
 
-const unreadMessagesCount = computed(() => (page.props.unreadMessagesCount as number) ?? 0);
+const unreadMessagesCount = computed(
+    () => (page.props.unreadMessagesCount as number) ?? 0,
+);
 
 usePoll(15000, { only: ["unreadMessagesCount"] });
 
@@ -10,7 +12,11 @@ const isShowSideBar = ref(true);
 const page = usePage();
 
 const sidebarMenus = [
-    { menuName: "Home", route: route("client.home.index"), icon: "fa-solid fa-tachograph-digital" },
+    {
+        menuName: "Home",
+        route: route("client.home.index"),
+        icon: "fa-solid fa-tachograph-digital",
+    },
     {
         menuName: "My Design Requests",
         route: route("client.design.index"),
@@ -60,18 +66,21 @@ const isActive = (href: string | URL) =>
             <div class="w-64 h-full flex flex-col">
                 <!-- Logo -->
                 <div
-                    class="h-16 flex items-center justify-center px-5 border-b border-slate-800"
+                    class="h-16 flex justify-between items-center ps-8 pe-5 border-b border-slate-800"
                 >
                     <Link
-                        class="flex items-center gap-3 no-underline flex-shrink-0"
+                        class="flex items-center gap-2 no-underline flex-shrink-0"
                         :href="route('client.home.index')"
                     >
-                        <span
-                            class="w-8 h-8 rounded-md bg-paper text-ink font-bold flex items-center justify-center text-lg leading-none pt-0.5 font-display"
-                            >JC</span
-                        >
+                        <div class="py-1 rounded bg-white">
+                            <img
+                                class="h-8 w-auto"
+                                src="/images/printcode.png"
+                                alt="logo"
+                            />
+                        </div>
                         <span class="font-semibold text-[15px] tracking-tight"
-                            >JerseyConnect</span
+                            >PrintCode</span
                         >
                     </Link>
                     <button
@@ -98,7 +107,10 @@ const isActive = (href: string | URL) =>
                         <div class="relative">
                             <font-awesome-icon :icon="menu.icon" />
                             <span
-                                v-if="menu.menuName === 'Messages' && unreadMessagesCount > 0"
+                                v-if="
+                                    menu.menuName === 'Messages' &&
+                                    unreadMessagesCount > 0
+                                "
                                 class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"
                             />
                         </div>

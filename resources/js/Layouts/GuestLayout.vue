@@ -9,12 +9,16 @@ import { Link } from "@inertiajs/vue3";
     >
         <div>
             <Link href="/" class="flex items-center gap-2.5">
+                <div class="py-1 rounded bg-white">
+                    <img
+                        class="h-8 w-auto"
+                        src="/images/printcode.png"
+                        alt="logo"
+                    />
+                </div>
                 <span
-                    class="w-8 h-8 rounded-md bg-paper text-ink flex items-center justify-center text-lg leading-none pt-0.5 font-bold"
-                    >JC</span
-                >
-                <span class="font-semibold text-[15px] tracking-tight text-paper"
-                    >JerseyConnect</span
+                    class="font-semibold text-[15px] tracking-tight text-paper"
+                    >PrintCode</span
                 >
             </Link>
         </div>

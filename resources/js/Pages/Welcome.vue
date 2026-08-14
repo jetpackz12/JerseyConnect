@@ -31,7 +31,7 @@ function onKeydown(e: KeyboardEvent) {
 </script>
 
 <template>
-    <Head title="JerseyConnect">
+    <Head title="Welcome">
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" />
         <link
@@ -53,12 +53,15 @@ function onKeydown(e: KeyboardEvent) {
                     class="flex items-center gap-2.5"
                     @click="closeMobileMenu"
                 >
-                    <span
-                        class="w-8 h-8 rounded-md bg-ink text-paper flex items-center justify-center text-lg leading-none pt-0.5 font-display"
-                        >JC</span
-                    >
+                    <div>
+                        <img
+                            class="h-8 w-auto"
+                            src="/images/printcode.png"
+                            alt="logo"
+                        />
+                    </div>
                     <span class="font-semibold text-[15px] tracking-tight"
-                        >JerseyConnect</span
+                        >PrintCode</span
                     >
                 </Link>
 
@@ -232,9 +235,9 @@ function onKeydown(e: KeyboardEvent) {
                         class="mt-6 text-lg text-ink/70 max-w-md leading-relaxed"
                     >
                         You can log in, tap a jersey, and type what to change.
-                        From there JerseyConnect carries the order through
-                        quoting, payment, chat, and delivery no spreadsheets, no
-                        separate courier app.
+                        From there PrintCode carries the order through quoting,
+                        payment, chat, and delivery no spreadsheets, no separate
+                        courier app.
                     </p>
                     <div class="mt-8 flex flex-wrap items-center gap-4">
                         <a
@@ -741,13 +744,16 @@ function onKeydown(e: KeyboardEvent) {
                 class="mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-ink/50"
             >
                 <div class="flex items-center gap-2">
-                    <span
-                        class="w-6 h-6 rounded-md bg-ink text-paper flex items-center justify-center text-sm leading-none pt-0.5 font-display"
-                        >JC</span
-                    >
-                    <span class="font-medium text-ink/70">JerseyConnect</span>
+                    <div>
+                        <img
+                            class="h-8 w-auto"
+                            src="/images/printcode.png"
+                            alt="logo"
+                        />
+                    </div>
+                    <span class="font-medium text-ink/70">PrintCode</span>
                 </div>
-                <p>© 2026 JerseyConnect. All rights reserved.</p>
+                <p>© 2026 PrintCode. All rights reserved.</p>
             </div>
         </footer>
     </div>

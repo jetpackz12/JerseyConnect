@@ -1,10 +1,8 @@
 <script setup>
 import { ref, computed } from "vue";
-import { Link, usePage, usePoll  } from "@inertiajs/vue3";
+import { Link, usePage, usePoll } from "@inertiajs/vue3";
 
-const unreadMessagesCount = computed(
-    () => page.props.unreadMessagesCount  ?? 0,
-);
+const unreadMessagesCount = computed(() => page.props.unreadMessagesCount ?? 0);
 
 usePoll(15000, { only: ["unreadMessagesCount"] });
 
@@ -99,18 +97,21 @@ const toggleSubmenu = (menuName) => {
             <div class="w-64 h-full flex flex-col">
                 <!-- Logo -->
                 <div
-                    class="h-16 flex items-center justify-center px-5 border-b border-slate-800"
+                    class="h-16 flex justify-between items-center ps-8 pe-5 border-b border-slate-800"
                 >
                     <Link
-                        class="flex items-center gap-3 no-underline flex-shrink-0"
+                        class="flex items-center gap-2 no-underline flex-shrink-0"
                         :href="route('admin.dashboard')"
                     >
-                        <span
-                            class="w-8 h-8 rounded-md bg-paper text-ink font-bold flex items-center justify-center text-lg leading-none pt-0.5 font-display"
-                            >JC</span
-                        >
+                        <div class="py-1 rounded bg-white">
+                            <img
+                                class="h-8 w-auto"
+                                src="/images/printcode.png"
+                                alt="logo"
+                            />
+                        </div>
                         <span class="font-semibold text-[15px] tracking-tight"
-                            >JerseyConnect</span
+                            >PrintCode</span
                         >
                     </Link>
                     <button
