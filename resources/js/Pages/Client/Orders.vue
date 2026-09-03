@@ -651,8 +651,8 @@ function formatDate(value: string) {
                             v-if="addressForm.latitude && addressForm.longitude"
                             class="mt-1 text-xs text-[#14202B]/50"
                         >
-                            {{ addressForm.latitude.toFixed(6) }},
-                            {{ addressForm.longitude.toFixed(6) }}
+                            {{ addressForm.latitude }},
+                            {{ addressForm.longitude }}
                         </p>
                     </div>
                 </div>
